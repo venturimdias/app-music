@@ -21,8 +21,9 @@ export function RequireAuth() {
 
 // Páginas exclusivas de ADM; participante é devolvido para /songs.
 export function RequireAdm() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
+  if (loading) return null;
   if (user?.perfil !== 'ADM') {
     return <Navigate to="/songs" replace />;
   }
