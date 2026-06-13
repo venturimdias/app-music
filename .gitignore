@@ -1,0 +1,26 @@
+# Dependências e builds
+node_modules/
+dist/
+
+# Banco de dados local
+*.sqlite
+*.db
+
+# Variáveis de ambiente (nunca commitar)
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Pastas antigas / legado (não fazem parte do repositório)
+002app-music-db/
+002backend2/
+002filesOld/
+002frontend3/
+03backend/
+03frontend/
+app/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* Acordes destacados na visualização da cifra (ver utils/cifra.ts) */
+.acorde {
+  color: #4f46e5;
+  font-weight: 700;
+}
