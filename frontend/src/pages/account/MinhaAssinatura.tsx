@@ -27,7 +27,7 @@ function fmtDate(d: string | null) {
   return new Date(d).toLocaleDateString('pt-BR');
 }
 
-function PixPendenteCard({ asaasSubId }: { asaasSubId: string }) {
+function PixPendenteCard({ asaasSubId, onPago }: { asaasSubId: string; onPago: () => void }) {
   const [pix, setPix] = useState<PixPendente | null | undefined>(undefined);
   const [copiado, setCopiado] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -40,7 +40,7 @@ function PixPendenteCard({ asaasSubId }: { asaasSubId: string }) {
         const res = await api.get<Subscription | null>(`/billing/minha-assinatura?_t=${Date.now()}`);
         if (res.data?.status === 'active') {
           clearInterval(intervalRef.current!);
-          setPix(null);
+          onPago();
         } else {
           carregarPix();
         }
@@ -58,7 +58,16 @@ function PixPendenteCard({ asaasSubId }: { asaasSubId: string }) {
   async function carregarPix() {
     try {
       const res = await api.get<PixPendente | null>('/billing/minha-assinatura/pix-pendente');
-      setPix(res.data ?? null);
+      const pixData = res.data ?? null;
+      setPix(pixData);
+      // Sem cobrança pendente — o backend já pode ter sincronizado o status; verifica imediatamente
+      if (!pixData) {
+        const subRes = await api.get<Subscription | null>(`/billing/minha-assinatura?_t=${Date.now()}`);
+        if (subRes.data?.status === 'active') {
+          clearInterval(intervalRef.current ?? undefined);
+          onPago();
+        }
+      }
     } catch {
       setPix(null);
     }
@@ -125,14 +134,19 @@ export function MinhaAssinatura() {
   const [cancelando, setCancelando] = useState(false);
   const [mostrarCancelar, setMostrarCancelar] = useState(false);
 
-  useEffect(() => {
-    api.get<Subscription | null>('/billing/minha-assinatura')
+  function carregarDados() {
+    api.get<Subscription | null>(`/billing/minha-assinatura?_t=${Date.now()}`)
       .then((r) => setAssinatura(r.data))
       .catch(() => setAssinatura(null));
 
-    api.get<Payment[]>('/billing/minha-assinatura/pagamentos')
+    api.get<Payment[]>(`/billing/minha-assinatura/pagamentos?_t=${Date.now()}`)
       .then((r) => setPagamentos(r.data))
       .catch(() => setPagamentos([]));
+  }
+
+  useEffect(() => {
+    carregarDados();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function cancelar() {
@@ -202,7 +216,10 @@ export function MinhaAssinatura() {
 
       {/* PIX pendente (cobrança mensal/anual do Asaas) */}
       {mostrarPixPendente && (
-        <PixPendenteCard asaasSubId={assinatura!.asaas_subscription_id!} />
+        <PixPendenteCard
+          asaasSubId={assinatura!.asaas_subscription_id!}
+          onPago={carregarDados}
+        />
       )}
 
       {/* Assinatura */}
@@ -295,6 +312,22 @@ export function MinhaAssinatura() {
             className="mt-4 inline-block rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
           >
             Ver planos disponíveis
+          </Link>
+        </div>
+      ) : !isAdm ? (
+        <div className="rounded-xl bg-white p-6 shadow-sm text-center">
+          <p className="text-slate-500">Nenhuma assinatura ativa encontrada.</p>
+          <button
+            onClick={carregarDados}
+            className="mt-4 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            Verificar novamente
+          </button>
+          <Link
+            to="/planos"
+            className="mt-2 block text-sm text-indigo-600 hover:underline"
+          >
+            Ir para planos
           </Link>
         </div>
       ) : null}

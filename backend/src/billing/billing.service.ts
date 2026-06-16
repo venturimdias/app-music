@@ -221,7 +221,22 @@ export class BillingService implements OnApplicationBootstrap {
 
     const cobracasPendentes = await this.asaas.buscarCobrancasPendentes(sub.asaas_subscription_id);
     const cobranca = cobracasPendentes[0];
-    if (!cobranca?.pixTransaction) return null;
+
+    if (!cobranca?.pixTransaction) {
+      // Sem cobrança pendente — verifica se a primeira já foi paga e o webhook falhou
+      if (sub.status === 'pending' || sub.status === 'past_due') {
+        const primeira = await this.asaas.buscarPrimeiraCobranca(sub.asaas_subscription_id);
+        if (primeira && (primeira.status === 'RECEIVED' || primeira.status === 'CONFIRMED')) {
+          await this.onAsaasPaid({
+            subscription: sub.asaas_subscription_id,
+            id: primeira.id,
+            value: primeira.value,
+            paymentDate: primeira.paymentDate,
+          });
+        }
+      }
+      return null;
+    }
 
     return {
       pixQrCode: `data:image/png;base64,${cobranca.pixTransaction.qrCode}`,
