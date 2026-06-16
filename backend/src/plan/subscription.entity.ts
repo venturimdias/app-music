@@ -38,8 +38,14 @@ export class Subscription {
   @Column()
   status: SubscriptionStatus;
 
+  @Column({ default: 'pagarme' })
+  provider: 'pagarme' | 'asaas';
+
   @Column({ nullable: true })
   pagarme_subscription_id: string;
+
+  @Column({ nullable: true })
+  asaas_subscription_id: string;
 
   @Column({ nullable: true })
   started_at: Date;

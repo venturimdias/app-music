@@ -19,6 +19,7 @@ import { AdminPagamentos } from './pages/adm/AdminPagamentos';
 import { MinhaAssinatura } from './pages/account/MinhaAssinatura';
 import { BillingSucesso } from './pages/billing/BillingSucesso';
 import { BillingCancelado } from './pages/billing/BillingCancelado';
+import { BillingPix } from './pages/billing/BillingPix';
 
 // /login e /register não fazem sentido para quem já está logado.
 function PublicOnly({ children }: { children: React.ReactElement }) {
@@ -37,6 +38,7 @@ export function App() {
       <Route path="/lista-repertorio/:slug" element={<ListaRepertorio />} />
       <Route path="/billing/sucesso" element={<BillingSucesso />} />
       <Route path="/billing/cancelado" element={<BillingCancelado />} />
+      <Route path="/billing/pix" element={<BillingPix />} />
 
       {/* Rotas autenticadas */}
       <Route element={<RequireAuth />}>

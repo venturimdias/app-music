@@ -42,4 +42,7 @@ export class User {
 
   @Column({ nullable: true })
   pagarme_customer_id: string;
+
+  @Column({ nullable: true })
+  asaas_customer_id: string;
 }

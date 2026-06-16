@@ -6,6 +6,13 @@ export class AssinarDto {
 
   @IsEnum(['monthly', 'yearly'])
   billing_cycle: 'monthly' | 'yearly';
+
+  @IsEnum(['credit_card', 'pix'])
+  payment_method: 'credit_card' | 'pix';
+
+  @IsOptional()
+  @IsString()
+  cpfCnpj?: string;
 }
 
 export class CancelarDto {

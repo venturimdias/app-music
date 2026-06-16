@@ -47,6 +47,12 @@ export class BillingController {
     return this.billing.meusPagamentos(user.sub);
   }
 
+  @Get('billing/minha-assinatura/pix-pendente')
+  @UseGuards(JwtAuthGuard)
+  pixPendente(@CurrentUser() user: AuthUser) {
+    return this.billing.pixPendente(user.sub);
+  }
+
   @Delete('billing/minha-assinatura')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
@@ -54,7 +60,7 @@ export class BillingController {
     return this.billing.cancelar(user.sub, dto.motivo);
   }
 
-  // ── Webhook pagar.me (público, verificado por HMAC) ─────────────────────
+  // ── Webhooks (públicos, verificados por token/HMAC) ─────────────────────
 
   @Post('billing/webhook')
   @HttpCode(200)
@@ -64,6 +70,16 @@ export class BillingController {
   ) {
     const rawBody = (req.rawBody ?? Buffer.alloc(0)).toString('utf-8');
     return this.billing.processarWebhook(rawBody, assinatura);
+  }
+
+  @Post('billing/webhook/asaas')
+  @HttpCode(200)
+  webhookAsaas(
+    @Req() req: RequestWithRawBody,
+    @Query('token') token = '',
+  ) {
+    const rawBody = (req.rawBody ?? Buffer.alloc(0)).toString('utf-8');
+    return this.billing.processarWebhookAsaas(rawBody, token);
   }
 
   // ── ADM ─────────────────────────────────────────────────────────────────

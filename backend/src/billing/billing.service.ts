@@ -17,7 +17,20 @@ import { Plan } from '../plan/plan.entity';
 import { User } from '../user/user.entity';
 import { Playlist } from '../playlist/playlist.entity';
 import { PagarmeService } from './pagarme.service';
+import { AsaasService } from './asaas.service';
 import { AssinarDto, ConcederAcessoDto } from './billing.dto';
+
+export type AssinarResult =
+  | { provider: 'pagarme'; checkoutUrl: string }
+  | { provider: 'asaas'; pixQrCode: string; pixCopiaECola: string; expiresAt: string | null };
+
+export interface PixPendenteResult {
+  pixQrCode: string;
+  pixCopiaECola: string;
+  expiresAt: string | null;
+  value: number;
+  asaasPaymentId: string;
+}
 
 @Injectable()
 export class BillingService implements OnApplicationBootstrap {
@@ -29,6 +42,7 @@ export class BillingService implements OnApplicationBootstrap {
     @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(Playlist) private readonly playlists: Repository<Playlist>,
     private readonly pagarme: PagarmeService,
+    private readonly asaas: AsaasService,
     private readonly config: ConfigService,
   ) {}
 
@@ -39,7 +53,7 @@ export class BillingService implements OnApplicationBootstrap {
 
   // ── Usuário ──────────────────────────────────────────────────────────────
 
-  async assinar(userId: number, dto: AssinarDto): Promise<{ checkoutUrl: string }> {
+  async assinar(userId: number, dto: AssinarDto): Promise<AssinarResult> {
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
@@ -56,6 +70,17 @@ export class BillingService implements OnApplicationBootstrap {
     const plan = await this.plans.findOne({ where: { id: dto.planId } });
     if (!plan || plan.is_free) throw new BadRequestException('Plano inválido para assinatura.');
 
+    if (dto.payment_method === 'pix') {
+      return this.assinarComAsaas(user, plan, dto);
+    }
+    return this.assinarComPagarme(user, plan, dto);
+  }
+
+  private async assinarComPagarme(
+    user: User,
+    plan: Plan,
+    dto: AssinarDto,
+  ): Promise<{ provider: 'pagarme'; checkoutUrl: string }> {
     const pagarmePlanId =
       dto.billing_cycle === 'monthly'
         ? plan.pagarme_plan_id_monthly
@@ -66,7 +91,6 @@ export class BillingService implements OnApplicationBootstrap {
       );
     }
 
-    // Cria ou reutiliza o customer no pagar.me
     let pagarmeCustomerId = user.pagarme_customer_id;
     if (!pagarmeCustomerId) {
       const customer = await this.pagarme.upsertCustomer({
@@ -75,7 +99,7 @@ export class BillingService implements OnApplicationBootstrap {
         nome: user.nome,
       });
       pagarmeCustomerId = customer.id;
-      await this.users.update(userId, { pagarme_customer_id: pagarmeCustomerId });
+      await this.users.update(user.id, { pagarme_customer_id: pagarmeCustomerId });
     }
 
     const frontendUrl = this.config.get('FRONTEND_URL', 'http://localhost:5173');
@@ -84,15 +108,16 @@ export class BillingService implements OnApplicationBootstrap {
       pagarmePlanId,
       billingCycle: dto.billing_cycle,
       successUrl: `${frontendUrl}/billing/sucesso`,
-      metadata: { user_id: String(userId), plan_id: String(plan.id) },
+      metadata: { user_id: String(user.id), plan_id: String(plan.id) },
     });
 
     await this.subscriptions.save(
       this.subscriptions.create({
-        userId,
+        userId: user.id,
         planId: plan.id,
         billing_cycle: dto.billing_cycle,
         status: 'pending',
+        provider: 'pagarme',
         pagarme_subscription_id: pagarmeSub.id,
         started_at: new Date(),
       }),
@@ -100,7 +125,71 @@ export class BillingService implements OnApplicationBootstrap {
 
     const checkoutUrl =
       pagarmeSub.checkout_url ?? `${frontendUrl}/billing/cancelado?reason=no_checkout`;
-    return { checkoutUrl };
+    return { provider: 'pagarme', checkoutUrl };
+  }
+
+  private async assinarComAsaas(
+    user: User,
+    plan: Plan,
+    dto: AssinarDto,
+  ): Promise<{ provider: 'asaas'; pixQrCode: string; pixCopiaECola: string; expiresAt: string | null }> {
+    if (!dto.cpfCnpj) {
+      throw new BadRequestException('CPF ou CNPJ é obrigatório para pagamento via PIX.');
+    }
+
+    // Sempre passa pelo criarOuBuscarCliente para garantir que o CPF esteja atualizado
+    const customer = await this.asaas.criarOuBuscarCliente({
+      id: user.id,
+      email: user.email,
+      nome: user.nome,
+      cpfCnpj: dto.cpfCnpj,
+    });
+    const asaasCustomerId = customer.id;
+    if (!user.asaas_customer_id) {
+      await this.users.update(user.id, { asaas_customer_id: asaasCustomerId });
+    }
+
+    const value =
+      dto.billing_cycle === 'monthly'
+        ? Number(plan.price_monthly)
+        : Number(plan.price_yearly);
+    const cycle = dto.billing_cycle === 'monthly' ? 'MONTHLY' : 'YEARLY';
+
+    const asaasSub = await this.asaas.criarAssinatura({
+      asaasCustomerId,
+      value,
+      cycle,
+      description: `${plan.name} — ${cycle === 'MONTHLY' ? 'Mensal' : 'Anual'}`,
+    });
+
+    const sub = await this.subscriptions.save(
+      this.subscriptions.create({
+        userId: user.id,
+        planId: plan.id,
+        billing_cycle: dto.billing_cycle,
+        status: 'pending',
+        provider: 'asaas',
+        asaas_subscription_id: asaasSub.id,
+        started_at: new Date(),
+      }),
+    );
+
+    // Busca a primeira cobrança já gerada pelo Asaas para retornar o QR
+    const cobranca = await this.asaas.buscarPrimeiraCobranca(asaasSub.id);
+    const pix = cobranca?.pixTransaction;
+
+    if (!pix) {
+      throw new BadRequestException(
+        'Assinatura criada mas QR code PIX ainda não disponível. Tente novamente em instantes.',
+      );
+    }
+
+    return {
+      provider: 'asaas',
+      pixQrCode: `data:image/png;base64,${pix.qrCode}`,
+      pixCopiaECola: pix.payload,
+      expiresAt: pix.expirationDate,
+    };
   }
 
   async minhaAssinatura(userId: number): Promise<Subscription | null> {
@@ -119,11 +208,37 @@ export class BillingService implements OnApplicationBootstrap {
     return this.payments.find({ where: { userId }, order: { created_at: 'DESC' } });
   }
 
+  async pixPendente(userId: number): Promise<PixPendenteResult | null> {
+    const sub = await this.subscriptions.findOne({
+      where: [
+        { userId, provider: 'asaas', status: 'active' },
+        { userId, provider: 'asaas', status: 'pending' },
+        { userId, provider: 'asaas', status: 'past_due' },
+      ],
+      order: { created_at: 'DESC' },
+    });
+    if (!sub?.asaas_subscription_id) return null;
+
+    const cobracasPendentes = await this.asaas.buscarCobrancasPendentes(sub.asaas_subscription_id);
+    const cobranca = cobracasPendentes[0];
+    if (!cobranca?.pixTransaction) return null;
+
+    return {
+      pixQrCode: `data:image/png;base64,${cobranca.pixTransaction.qrCode}`,
+      pixCopiaECola: cobranca.pixTransaction.payload,
+      expiresAt: cobranca.pixTransaction.expirationDate,
+      value: cobranca.value,
+      asaasPaymentId: cobranca.id,
+    };
+  }
+
   async cancelar(userId: number, motivo?: string): Promise<void> {
     const sub = await this.minhaAssinatura(userId);
     if (!sub) throw new NotFoundException('Nenhuma assinatura ativa encontrada.');
 
-    if (sub.pagarme_subscription_id) {
+    if (sub.provider === 'asaas' && sub.asaas_subscription_id) {
+      await this.asaas.cancelarAssinatura(sub.asaas_subscription_id).catch(console.error);
+    } else if (sub.pagarme_subscription_id) {
       await this.pagarme.cancelarAssinatura(sub.pagarme_subscription_id).catch(console.error);
     }
 
@@ -134,7 +249,7 @@ export class BillingService implements OnApplicationBootstrap {
     await this.subscriptions.save(sub);
   }
 
-  // ── Webhook ───────────────────────────────────────────────────────────────
+  // ── Webhook Pagar.me ──────────────────────────────────────────────────────
 
   async processarWebhook(rawPayload: string, assinatura: string): Promise<void> {
     const webhookSecret = this.config.get<string>('PAGARME_WEBHOOK_SECRET', '');
@@ -164,7 +279,7 @@ export class BillingService implements OnApplicationBootstrap {
     );
 
     try {
-      await this.handleEvent(eventType, data);
+      await this.handleEventPagarme(eventType, data);
       log.processed = true;
     } catch (err) {
       log.error_message = (err as Error).message;
@@ -172,20 +287,20 @@ export class BillingService implements OnApplicationBootstrap {
     await this.webhookLogs.save(log);
   }
 
-  private async handleEvent(type: string, data: Record<string, unknown>): Promise<void> {
+  private async handleEventPagarme(type: string, data: Record<string, unknown>): Promise<void> {
     switch (type) {
       case 'charge.paid':
-        return this.onChargePaid(data);
+        return this.onPagarmePaid(data);
       case 'charge.payment_failed':
-        return this.onChargeFailed(data);
+        return this.onPagarmeFailed(data);
       case 'subscription.canceled':
-        return this.onSubscriptionCanceled(data);
+        return this.onPagarmeSubCanceled(data);
       case 'charge.refunded':
-        return this.onChargeRefunded(data);
+        return this.onPagarmeRefunded(data);
     }
   }
 
-  private async onChargePaid(data: Record<string, unknown>): Promise<void> {
+  private async onPagarmePaid(data: Record<string, unknown>): Promise<void> {
     const pagarmeSubId = data.subscription_id as string | undefined;
     if (!pagarmeSubId) return;
 
@@ -198,7 +313,6 @@ export class BillingService implements OnApplicationBootstrap {
     sub.past_due_since = null;
     if (data.billing_at) sub.current_period_end = new Date(data.billing_at as string);
     await this.subscriptions.save(sub);
-
     await this.users.update(sub.userId, { planId: sub.planId });
     await this.desbloquearPlaylists(sub.userId, sub.planId);
 
@@ -210,6 +324,7 @@ export class BillingService implements OnApplicationBootstrap {
         userId: sub.userId,
         amount: Number(data.amount ?? 0) / 100,
         status: 'paid',
+        provider: 'pagarme',
         pagarme_charge_id: data.id as string,
         payment_method: data.payment_method as string | undefined,
         card_last_digits: card?.last_four_digits,
@@ -218,7 +333,7 @@ export class BillingService implements OnApplicationBootstrap {
     );
   }
 
-  private async onChargeFailed(data: Record<string, unknown>): Promise<void> {
+  private async onPagarmeFailed(data: Record<string, unknown>): Promise<void> {
     const pagarmeSubId = data.subscription_id as string | undefined;
     if (!pagarmeSubId) return;
 
@@ -237,15 +352,139 @@ export class BillingService implements OnApplicationBootstrap {
         userId: sub.userId,
         amount: Number(data.amount ?? 0) / 100,
         status: 'failed',
+        provider: 'pagarme',
         pagarme_charge_id: data.id as string,
         payment_method: data.payment_method as string | undefined,
       }),
     );
   }
 
-  private async onSubscriptionCanceled(data: Record<string, unknown>): Promise<void> {
+  private async onPagarmeSubCanceled(data: Record<string, unknown>): Promise<void> {
     const sub = await this.subscriptions.findOne({
       where: { pagarme_subscription_id: data.id as string },
+    });
+    if (!sub) return;
+    await this.downgradeParaFree(sub.userId);
+    sub.status = 'canceled';
+    sub.canceled_at = new Date();
+    await this.subscriptions.save(sub);
+  }
+
+  private async onPagarmeRefunded(data: Record<string, unknown>): Promise<void> {
+    const payment = await this.payments.findOne({
+      where: { pagarme_charge_id: data.id as string },
+    });
+    if (payment) {
+      payment.status = 'refunded';
+      await this.payments.save(payment);
+    }
+  }
+
+  // ── Webhook Asaas ─────────────────────────────────────────────────────────
+
+  async processarWebhookAsaas(rawPayload: string, token: string): Promise<void> {
+    const webhookToken = this.config.get<string>('ASAAS_WEBHOOK_TOKEN', '');
+    if (webhookToken && token !== webhookToken) {
+      throw new UnauthorizedException('Token de webhook Asaas inválido');
+    }
+
+    const evento = JSON.parse(rawPayload) as Record<string, unknown>;
+    const eventType = (evento.event as string) ?? '';
+    const payment = (evento.payment ?? {}) as Record<string, unknown>;
+
+    const log = await this.webhookLogs.save(
+      this.webhookLogs.create({
+        event_type: `asaas.${eventType}`,
+        pagarme_event_id: undefined,
+        payload: evento,
+        processed: false,
+      }),
+    );
+
+    try {
+      await this.handleEventAsaas(eventType, payment);
+      log.processed = true;
+    } catch (err) {
+      log.error_message = (err as Error).message;
+    }
+    await this.webhookLogs.save(log);
+  }
+
+  private async handleEventAsaas(type: string, payment: Record<string, unknown>): Promise<void> {
+    switch (type) {
+      case 'PAYMENT_RECEIVED':
+      case 'PAYMENT_CONFIRMED':
+        return this.onAsaasPaid(payment);
+      case 'PAYMENT_OVERDUE':
+        return this.onAsaasOverdue(payment);
+      case 'SUBSCRIPTION_DELETED':
+        return this.onAsaasSubDeleted(payment);
+      case 'PAYMENT_REFUNDED':
+        return this.onAsaasRefunded(payment);
+    }
+  }
+
+  private async onAsaasPaid(payment: Record<string, unknown>): Promise<void> {
+    const asaasSubId = payment.subscription as string | undefined;
+    if (!asaasSubId) return;
+
+    const sub = await this.subscriptions.findOne({
+      where: { asaas_subscription_id: asaasSubId },
+    });
+    if (!sub) return;
+
+    sub.status = 'active';
+    sub.past_due_since = null;
+    await this.subscriptions.save(sub);
+    await this.users.update(sub.userId, { planId: sub.planId });
+    await this.desbloquearPlaylists(sub.userId, sub.planId);
+
+    await this.payments.save(
+      this.payments.create({
+        subscriptionId: sub.id,
+        userId: sub.userId,
+        amount: Number(payment.value ?? 0),
+        status: 'paid',
+        provider: 'asaas',
+        asaas_payment_id: payment.id as string,
+        payment_method: 'pix',
+        paid_at: payment.paymentDate ? new Date(payment.paymentDate as string) : new Date(),
+      }),
+    );
+  }
+
+  private async onAsaasOverdue(payment: Record<string, unknown>): Promise<void> {
+    const asaasSubId = payment.subscription as string | undefined;
+    if (!asaasSubId) return;
+
+    const sub = await this.subscriptions.findOne({
+      where: { asaas_subscription_id: asaasSubId },
+    });
+    if (!sub) return;
+
+    if (sub.status !== 'past_due') sub.past_due_since = new Date();
+    sub.status = 'past_due';
+    await this.subscriptions.save(sub);
+
+    await this.payments.save(
+      this.payments.create({
+        subscriptionId: sub.id,
+        userId: sub.userId,
+        amount: Number(payment.value ?? 0),
+        status: 'failed',
+        provider: 'asaas',
+        asaas_payment_id: payment.id as string,
+        payment_method: 'pix',
+      }),
+    );
+  }
+
+  private async onAsaasSubDeleted(payment: Record<string, unknown>): Promise<void> {
+    const asaasSubId = payment.subscription as string | undefined;
+    if (!asaasSubId) return;
+
+    const sub = await this.subscriptions.findOne({
+      where: { asaas_subscription_id: asaasSubId },
     });
     if (!sub) return;
 
@@ -255,13 +494,13 @@ export class BillingService implements OnApplicationBootstrap {
     await this.subscriptions.save(sub);
   }
 
-  private async onChargeRefunded(data: Record<string, unknown>): Promise<void> {
-    const payment = await this.payments.findOne({
-      where: { pagarme_charge_id: data.id as string },
+  private async onAsaasRefunded(payment: Record<string, unknown>): Promise<void> {
+    const p = await this.payments.findOne({
+      where: { asaas_payment_id: payment.id as string },
     });
-    if (payment) {
-      payment.status = 'refunded';
-      await this.payments.save(payment);
+    if (p) {
+      p.status = 'refunded';
+      await this.payments.save(p);
     }
   }
 
@@ -319,10 +558,17 @@ export class BillingService implements OnApplicationBootstrap {
   async reembolsar(paymentId: number): Promise<void> {
     const payment = await this.payments.findOne({ where: { id: paymentId } });
     if (!payment) throw new NotFoundException('Pagamento não encontrado');
-    if (!payment.pagarme_charge_id)
-      throw new BadRequestException('Cobrança sem ID pagar.me para reembolso.');
 
-    await this.pagarme.reembolsarCobrança(payment.pagarme_charge_id);
+    if (payment.provider === 'asaas') {
+      if (!payment.asaas_payment_id)
+        throw new BadRequestException('Cobrança sem ID Asaas para reembolso.');
+      await this.asaas.reembolsar(payment.asaas_payment_id);
+    } else {
+      if (!payment.pagarme_charge_id)
+        throw new BadRequestException('Cobrança sem ID pagar.me para reembolso.');
+      await this.pagarme.reembolsarCobrança(payment.pagarme_charge_id);
+    }
+
     payment.status = 'refunded';
     await this.payments.save(payment);
   }

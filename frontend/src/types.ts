@@ -90,6 +90,8 @@ export type PlaylistPublica = Omit<Playlist, 'senha' | 'userId'>;
 export type SubscriptionStatus = 'pending' | 'active' | 'past_due' | 'canceled';
 export type BillingCycle = 'monthly' | 'yearly';
 
+export type PaymentProvider = 'pagarme' | 'asaas';
+
 export interface Subscription {
   id: number;
   userId: number;
@@ -97,7 +99,9 @@ export interface Subscription {
   plan: Plan;
   billing_cycle: BillingCycle;
   status: SubscriptionStatus;
+  provider: PaymentProvider;
   pagarme_subscription_id: string | null;
+  asaas_subscription_id: string | null;
   started_at: string | null;
   current_period_end: string | null;
   past_due_since: string | null;
@@ -113,11 +117,21 @@ export interface Payment {
   userId: number;
   amount: number;
   status: 'paid' | 'failed' | 'refunded';
+  provider: PaymentProvider;
   pagarme_charge_id: string | null;
+  asaas_payment_id: string | null;
   payment_method: string | null;
   card_last_digits: string | null;
   paid_at: string | null;
   created_at: string;
+}
+
+export interface PixPendente {
+  pixQrCode: string;
+  pixCopiaECola: string;
+  expiresAt: string | null;
+  value: number;
+  asaasPaymentId: string;
 }
 
 export const TONS = [

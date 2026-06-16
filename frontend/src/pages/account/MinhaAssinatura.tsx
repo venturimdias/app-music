@@ -1,21 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { useToast } from '../../components/Toast';
-import type { Payment, Subscription } from '../../types';
+import type { Payment, PixPendente, Subscription } from '../../types';
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  active:   { label: 'Ativa',       color: 'bg-emerald-100 text-emerald-700' },
-  pending:  { label: 'Pendente',    color: 'bg-yellow-100 text-yellow-700' },
-  past_due: { label: 'Inadimplente',color: 'bg-red-100 text-red-700' },
-  canceled: { label: 'Cancelada',   color: 'bg-slate-100 text-slate-500' },
+  active:   { label: 'Ativa',        color: 'bg-emerald-100 text-emerald-700' },
+  pending:  { label: 'Pendente',     color: 'bg-yellow-100 text-yellow-700' },
+  past_due: { label: 'Inadimplente', color: 'bg-red-100 text-red-700' },
+  canceled: { label: 'Cancelada',    color: 'bg-slate-100 text-slate-500' },
 };
 
 const paymentStatusLabel: Record<string, { label: string; color: string }> = {
-  paid:     { label: 'Pago',        color: 'text-emerald-600' },
-  failed:   { label: 'Falhou',      color: 'text-red-600' },
-  refunded: { label: 'Reembolsado', color: 'text-slate-500' },
+  paid:     { label: 'Pago',         color: 'text-emerald-600' },
+  failed:   { label: 'Falhou',       color: 'text-red-600' },
+  refunded: { label: 'Reembolsado',  color: 'text-slate-500' },
 };
 
 function fmt(v: number) {
@@ -25,6 +25,96 @@ function fmt(v: number) {
 function fmtDate(d: string | null) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('pt-BR');
+}
+
+function PixPendenteCard({ asaasSubId }: { asaasSubId: string }) {
+  const [pix, setPix] = useState<PixPendente | null | undefined>(undefined);
+  const [copiado, setCopiado] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    carregarPix();
+
+    intervalRef.current = setInterval(async () => {
+      try {
+        const res = await api.get<Subscription | null>('/billing/minha-assinatura');
+        if (res.data?.status === 'active') {
+          clearInterval(intervalRef.current!);
+          setPix(null);
+        } else {
+          carregarPix();
+        }
+      } catch {
+        // ignora
+      }
+    }, 10000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asaasSubId]);
+
+  async function carregarPix() {
+    try {
+      const res = await api.get<PixPendente | null>('/billing/minha-assinatura/pix-pendente');
+      setPix(res.data ?? null);
+    } catch {
+      setPix(null);
+    }
+  }
+
+  async function copiar() {
+    if (!pix?.pixCopiaECola) return;
+    await navigator.clipboard.writeText(pix.pixCopiaECola);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 3000);
+  }
+
+  if (pix === undefined) return null;
+  if (pix === null) return null;
+
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm border border-emerald-200">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        PIX do mês atual
+      </h2>
+      <p className="mb-4 text-sm text-slate-600">
+        Valor: <strong>{fmt(pix.value)}</strong>
+        {pix.expiresAt && (
+          <> — válido até {new Date(pix.expiresAt).toLocaleString('pt-BR')}</>
+        )}
+      </p>
+      <div className="flex justify-center">
+        <img
+          src={pix.pixQrCode}
+          alt="QR Code PIX"
+          className="h-44 w-44 rounded-xl border border-slate-200"
+        />
+      </div>
+      <div className="mt-4">
+        <p className="mb-1 text-xs font-medium text-slate-500">Copia e cola</p>
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p className="flex-1 truncate font-mono text-xs text-slate-700">
+            {pix.pixCopiaECola}
+          </p>
+          <button
+            onClick={copiar}
+            className="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+          >
+            {copiado ? 'Copiado!' : 'Copiar'}
+          </button>
+        </div>
+      </div>
+      <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-3">
+        <svg className="h-4 w-4 animate-spin text-amber-500" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <span className="text-sm text-amber-700">Aguardando confirmação do pagamento…</span>
+      </div>
+    </div>
+  );
 }
 
 export function MinhaAssinatura() {
@@ -66,6 +156,11 @@ export function MinhaAssinatura() {
     return <div className="py-20 text-center text-slate-400">Carregando…</div>;
   }
 
+  const mostrarPixPendente =
+    assinatura?.provider === 'asaas' &&
+    assinatura?.asaas_subscription_id &&
+    (assinatura.status === 'pending' || assinatura.status === 'past_due');
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold text-slate-800">Minha assinatura</h1>
@@ -105,6 +200,11 @@ export function MinhaAssinatura() {
         </div>
       </div>
 
+      {/* PIX pendente (cobrança mensal/anual do Asaas) */}
+      {mostrarPixPendente && (
+        <PixPendenteCard asaasSubId={assinatura!.asaas_subscription_id!} />
+      )}
+
       {/* Assinatura */}
       {assinatura ? (
         <div className="rounded-xl bg-white p-6 shadow-sm">
@@ -118,13 +218,13 @@ export function MinhaAssinatura() {
             </div>
             <div>
               <dt className="text-xs text-slate-500">Ciclo</dt>
-              <dd className="font-medium text-slate-800 capitalize">
+              <dd className="font-medium text-slate-800">
                 {assinatura.billing_cycle === 'monthly' ? 'Mensal' : 'Anual'}
               </dd>
             </div>
             <div>
               <dt className="text-xs text-slate-500">Status</dt>
-              <dd>
+              <dd className="flex items-center gap-2">
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                     statusLabel[assinatura.status]?.color ?? 'bg-slate-100 text-slate-500'
@@ -132,6 +232,11 @@ export function MinhaAssinatura() {
                 >
                   {statusLabel[assinatura.status]?.label ?? assinatura.status}
                 </span>
+                {assinatura.provider === 'asaas' && (
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">
+                    PIX
+                  </span>
+                )}
               </dd>
             </div>
             <div>
@@ -216,9 +321,15 @@ export function MinhaAssinatura() {
                 <tr key={p.id}>
                   <td className="px-4 py-3 text-slate-600">{fmtDate(p.paid_at ?? p.created_at)}</td>
                   <td className="px-4 py-3 font-medium text-slate-800">{fmt(Number(p.amount))}</td>
-                  <td className="px-4 py-3 text-slate-500 capitalize">
-                    {p.payment_method ?? '—'}
-                    {p.card_last_digits && ` •••• ${p.card_last_digits}`}
+                  <td className="px-4 py-3 text-slate-500">
+                    {p.provider === 'asaas' ? (
+                      <span className="font-bold text-emerald-600 text-xs">PIX</span>
+                    ) : (
+                      <>
+                        {p.payment_method ?? '—'}
+                        {p.card_last_digits && ` •••• ${p.card_last_digits}`}
+                      </>
+                    )}
                   </td>
                   <td className={`px-4 py-3 font-medium ${paymentStatusLabel[p.status]?.color}`}>
                     {paymentStatusLabel[p.status]?.label ?? p.status}

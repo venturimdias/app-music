@@ -7,6 +7,7 @@ import { Plan } from '../plan/plan.entity';
 import { User } from '../user/user.entity';
 import { Playlist } from '../playlist/playlist.entity';
 import { PagarmeService } from './pagarme.service';
+import { AsaasService } from './asaas.service';
 import { BillingService } from './billing.service';
 import { BillingController } from './billing.controller';
 import { AuthModule } from '../auth/auth.module';
@@ -17,7 +18,7 @@ import { AuthModule } from '../auth/auth.module';
     AuthModule,
   ],
   controllers: [BillingController],
-  providers: [PagarmeService, BillingService],
+  providers: [PagarmeService, AsaasService, BillingService],
   exports: [BillingService],
 })
 export class BillingModule {}

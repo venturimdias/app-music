@@ -14,25 +14,67 @@ function economiaAnual(mensal: number, anual: number): number {
   return Math.round((1 - anual / (mensal * 12)) * 100);
 }
 
+type MetodoPagamento = 'credit_card' | 'pix';
+
+function formatCpfCnpj(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 14);
+  if (digits.length <= 11) {
+    return digits
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+  return digits
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+}
+
 export function Planos() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [planos, setPlanos] = useState<Plan[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [assinando, setAssinando] = useState<string | null>(null); // 'planId-cycle'
+  const [assinando, setAssinando] = useState<string | null>(null);
+  const [metodo, setMetodo] = useState<MetodoPagamento>('credit_card');
+  const [cpfCnpj, setCpfCnpj] = useState('');
 
   async function assinar(planId: number, billing_cycle: 'monthly' | 'yearly') {
+    if (metodo === 'pix' && cpfCnpj.replace(/\D/g, '').length < 11) {
+      toast('Informe um CPF ou CNPJ válido para pagar com PIX.');
+      return;
+    }
     setAssinando(`${planId}-${billing_cycle}`);
     try {
-      const res = await api.post<{ checkoutUrl: string }>('/billing/assinar', {
+      const res = await api.post<
+        | { provider: 'pagarme'; checkoutUrl: string }
+        | { provider: 'asaas'; pixQrCode: string; pixCopiaECola: string; expiresAt: string | null }
+      >('/billing/assinar', {
         planId,
         billing_cycle,
+        payment_method: metodo,
+        ...(metodo === 'pix' ? { cpfCnpj: cpfCnpj.replace(/\D/g, '') } : {}),
       });
-      window.location.href = res.data.checkoutUrl;
+
+      if (res.data.provider === 'pagarme') {
+        window.location.href = res.data.checkoutUrl;
+      } else {
+        navigate('/billing/pix', {
+          state: {
+            pixQrCode: res.data.pixQrCode,
+            pixCopiaECola: res.data.pixCopiaECola,
+            expiresAt: res.data.expiresAt,
+          },
+        });
+      }
     } catch {
-      // erro tratado pelo interceptor
-      toast('Não foi possível iniciar o checkout. Verifique se o plano pagar.me está configurado.');
+      if (metodo === 'credit_card') {
+        toast('Não foi possível iniciar o checkout. Verifique se o plano pagar.me está configurado.');
+      } else {
+        toast('Não foi possível gerar o PIX. Verifique a configuração do Asaas.');
+      }
     } finally {
       setAssinando(null);
     }
@@ -66,6 +108,60 @@ export function Planos() {
         )}
       </div>
 
+      {/* Toggle método de pagamento */}
+      {!isAdm && (
+        <div className="mb-8 flex justify-center">
+          <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 gap-1">
+            <button
+              onClick={() => setMetodo('credit_card')}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                metodo === 'credit_card'
+                  ? 'bg-white text-slate-800 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              Cartão de crédito
+            </button>
+            <button
+              onClick={() => setMetodo('pix')}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                metodo === 'pix'
+                  ? 'bg-white text-slate-800 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <span className="font-bold text-emerald-600 text-xs">PIX</span>
+              PIX recorrente
+            </button>
+          </div>
+        </div>
+      )}
+
+      {metodo === 'pix' && (
+        <div className="mb-6 mx-auto max-w-sm space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              CPF ou CNPJ <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="000.000.000-00"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(formatCpfCnpj(e.target.value))}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <p className="text-xs text-slate-500">
+            Com PIX, você receberá um QR code a cada ciclo de cobrança para renovar sua assinatura.
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {planos.map((plano) => {
           const isAtual = planoAtualId === plano.id && !isAdm;
@@ -83,7 +179,6 @@ export function Planos() {
                   : 'border-slate-200 hover:border-slate-300'
               }`}
             >
-              {/* Badge plano atual */}
               {isAtual && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-3 py-0.5 text-xs font-semibold text-white">
                   Plano atual
@@ -93,7 +188,6 @@ export function Planos() {
               <h2 className="text-xl font-bold text-slate-800">{plano.name}</h2>
               <p className="mt-1 text-sm text-slate-500">{plano.description}</p>
 
-              {/* Preços */}
               <div className="mt-4">
                 {plano.is_free ? (
                   <p className="text-3xl font-bold text-slate-800">Grátis</p>
@@ -115,7 +209,6 @@ export function Planos() {
                 )}
               </div>
 
-              {/* Features */}
               <ul className="mt-5 flex-1 space-y-2">
                 {plano.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-slate-700">
@@ -124,14 +217,11 @@ export function Planos() {
                 ))}
               </ul>
 
-              {/* Ação */}
               <div className="mt-6 space-y-2">
                 {isAdm ? (
                   <p className="text-center text-sm text-slate-400">Isento (ADM)</p>
                 ) : isAtual ? (
-                  <p className="text-center text-sm font-medium text-indigo-600">
-                    Plano ativo
-                  </p>
+                  <p className="text-center text-sm font-medium text-indigo-600">Plano ativo</p>
                 ) : plano.is_free ? (
                   <p className="text-center text-sm text-slate-400">Plano gratuito</p>
                 ) : (
@@ -142,7 +232,7 @@ export function Planos() {
                       className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {assinando === `${plano.id}-monthly`
-                        ? 'Redirecionando…'
+                        ? metodo === 'pix' ? 'Gerando PIX…' : 'Redirecionando…'
                         : `Assinar mensal — ${fmt(Number(plano.price_monthly))}/mês`}
                     </button>
                     <button
@@ -151,7 +241,7 @@ export function Planos() {
                       className="w-full rounded-lg border border-indigo-600 py-2.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {assinando === `${plano.id}-yearly`
-                        ? 'Redirecionando…'
+                        ? metodo === 'pix' ? 'Gerando PIX…' : 'Redirecionando…'
                         : `Assinar anual — ${fmt(Number(plano.price_yearly))}/ano`}
                     </button>
                   </>

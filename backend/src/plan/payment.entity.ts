@@ -34,8 +34,14 @@ export class Payment {
   @Column()
   status: 'paid' | 'failed' | 'refunded';
 
+  @Column({ default: 'pagarme' })
+  provider: 'pagarme' | 'asaas';
+
   @Column({ nullable: true })
   pagarme_charge_id: string;
+
+  @Column({ nullable: true })
+  asaas_payment_id: string;
 
   @Column({ nullable: true })
   payment_method: string;
