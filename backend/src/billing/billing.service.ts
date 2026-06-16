@@ -207,7 +207,7 @@ export class BillingService implements OnApplicationBootstrap {
   }
 
   async minhaAssinatura(userId: number): Promise<Subscription | null> {
-    return this.subscriptions.findOne({
+    const sub = await this.subscriptions.findOne({
       where: [
         { userId, status: 'active' },
         { userId, status: 'pending' },
@@ -216,6 +216,44 @@ export class BillingService implements OnApplicationBootstrap {
       relations: ['plan'],
       order: { created_at: 'DESC' },
     });
+
+    // Reconcilia com o Asaas: se o pagamento já foi confirmado lá mas o webhook
+    // não chegou, ativa localmente. Não depende do webhook para refletir o status.
+    if (
+      sub?.provider === 'asaas' &&
+      sub.asaas_subscription_id &&
+      (sub.status === 'pending' || sub.status === 'past_due')
+    ) {
+      const ativou = await this.reconciliarAsaas(sub.asaas_subscription_id);
+      if (ativou) {
+        return this.subscriptions.findOne({
+          where: { id: sub.id },
+          relations: ['plan'],
+        });
+      }
+    }
+
+    return sub;
+  }
+
+  // Verifica no Asaas se a primeira cobrança da assinatura já foi paga e, em caso
+  // afirmativo, ativa a assinatura local. Retorna true se ativou.
+  private async reconciliarAsaas(asaasSubId: string): Promise<boolean> {
+    try {
+      const primeira = await this.asaas.buscarPrimeiraCobranca(asaasSubId);
+      if (primeira && (primeira.status === 'RECEIVED' || primeira.status === 'CONFIRMED')) {
+        await this.onAsaasPaid({
+          subscription: asaasSubId,
+          id: primeira.id,
+          value: primeira.value,
+          paymentDate: primeira.paymentDate,
+        });
+        return true;
+      }
+    } catch (err) {
+      console.error('Falha ao reconciliar com Asaas:', (err as Error).message);
+    }
+    return false;
   }
 
   async meusPagamentos(userId: number): Promise<Payment[]> {
@@ -239,15 +277,7 @@ export class BillingService implements OnApplicationBootstrap {
     if (!cobranca) {
       // Sem cobrança pendente — verifica se a primeira já foi paga e o webhook falhou
       if (sub.status === 'pending' || sub.status === 'past_due') {
-        const primeira = await this.asaas.buscarPrimeiraCobranca(sub.asaas_subscription_id);
-        if (primeira && (primeira.status === 'RECEIVED' || primeira.status === 'CONFIRMED')) {
-          await this.onAsaasPaid({
-            subscription: sub.asaas_subscription_id,
-            id: primeira.id,
-            value: primeira.value,
-            paymentDate: primeira.paymentDate,
-          });
-        }
+        await this.reconciliarAsaas(sub.asaas_subscription_id);
       }
       return null;
     }
@@ -466,11 +496,22 @@ export class BillingService implements OnApplicationBootstrap {
     });
     if (!sub) return;
 
-    sub.status = 'active';
-    sub.past_due_since = null;
-    await this.subscriptions.save(sub);
-    await this.users.update(sub.userId, { planId: sub.planId });
-    await this.desbloquearPlaylists(sub.userId, sub.planId);
+    if (sub.status !== 'active') {
+      sub.status = 'active';
+      sub.past_due_since = null;
+      await this.subscriptions.save(sub);
+      await this.users.update(sub.userId, { planId: sub.planId });
+      await this.desbloquearPlaylists(sub.userId, sub.planId);
+    }
+
+    // Idempotência: não duplica o registro de pagamento se já existe
+    const paymentId = payment.id as string;
+    if (paymentId) {
+      const existente = await this.payments.findOne({
+        where: { asaas_payment_id: paymentId },
+      });
+      if (existente) return;
+    }
 
     await this.payments.save(
       this.payments.create({
@@ -479,7 +520,7 @@ export class BillingService implements OnApplicationBootstrap {
         amount: Number(payment.value ?? 0),
         status: 'paid',
         provider: 'asaas',
-        asaas_payment_id: payment.id as string,
+        asaas_payment_id: paymentId,
         payment_method: 'pix',
         paid_at: payment.paymentDate ? new Date(payment.paymentDate as string) : new Date(),
       }),

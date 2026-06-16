@@ -19,12 +19,16 @@ const paymentStatusLabel: Record<string, { label: string; color: string }> = {
 };
 
 function fmt(v: number) {
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 'R$ 0,00';
+  return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function fmtDate(d: string | null) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('pt-BR');
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('pt-BR');
 }
 
 function PixPendenteCard({ asaasSubId, onPago }: { asaasSubId: string; onPago: () => void }) {
