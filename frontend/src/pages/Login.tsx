@@ -1,10 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { useAuth } from '../auth/AuthContext';
+import { useToast } from '../components/Toast';
 import { PasswordInput } from '../components/PasswordInput';
+import { RecaptchaError, obterTokenRecaptcha } from '../auth/recaptcha';
 
 export function Login() {
   const { login } = useAuth();
+  const { executeRecaptcha } = useGoogleReCaptcha();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
@@ -15,11 +20,13 @@ export function Login() {
     e.preventDefault();
     setEnviando(true);
     try {
-      await login(email, password);
+      const recaptchaToken = await obterTokenRecaptcha(executeRecaptcha, 'login');
+      await login(email, password, recaptchaToken);
       // Volta para a página que o usuário tentou acessar, ou /songs.
       navigate(location.state?.from ?? '/songs', { replace: true });
-    } catch {
-      // erro já exibido em toast pelo interceptor
+    } catch (err) {
+      // Erros de API já viram toast pelo interceptor; os do reCAPTCHA mostramos aqui.
+      if (err instanceof RecaptchaError) toast(err.message, 'error');
     } finally {
       setEnviando(false);
     }
@@ -72,6 +79,28 @@ export function Login() {
           <Link to="/register" className="font-medium text-indigo-600 hover:underline">
             Cadastre-se
           </Link>
+        </p>
+
+        <p className="mt-4 text-center text-[11px] text-slate-400">
+          Este site é protegido por reCAPTCHA e está sujeito à{' '}
+          <a
+            href="https://policies.google.com/privacy"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Política de Privacidade
+          </a>{' '}
+          e aos{' '}
+          <a
+            href="https://policies.google.com/terms"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Termos de Serviço
+          </a>{' '}
+          do Google.
         </p>
       </form>
     </div>

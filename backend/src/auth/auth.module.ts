@@ -6,6 +6,7 @@ import { User } from '../user/user.entity';
 import { Perfil } from '../perfil/perfil.entity';
 import { Plan } from '../plan/plan.entity';
 import { AuthService } from './auth.service';
+import { RecaptchaService } from './recaptcha.service';
 import { AuthController } from './auth.controller';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -23,7 +24,7 @@ import { RolesGuard } from './guards/roles.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard, RolesGuard],
+  providers: [AuthService, RecaptchaService, JwtAuthGuard, RolesGuard],
   // Exporta para os módulos da Fase 3 reutilizarem os guards (que dependem do JwtService).
   exports: [JwtModule, JwtAuthGuard, RolesGuard],
 })

@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
+import { RecaptchaService } from './recaptcha.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -26,11 +27,26 @@ const cookieOptions = {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly recaptcha: RecaptchaService,
+  ) {}
 
   @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.auth.register(dto);
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.recaptcha.verify(dto.recaptchaToken, 'register');
+    const user = await this.auth.register(dto);
+    const token = this.auth.signToken(user);
+    res.cookie(COOKIE, token, cookieOptions);
+    return {
+      id: user.id,
+      nome: user.nome,
+      email: user.email,
+      perfilId: user.perfilId,
+    };
   }
 
   @Post('login')
@@ -39,6 +55,7 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
+    await this.recaptcha.verify(dto.recaptchaToken, 'login');
     const user = await this.auth.validateUser(dto.email, dto.password);
     const token = this.auth.signToken(user);
     res.cookie(COOKIE, token, cookieOptions);

@@ -13,4 +13,7 @@ export class RegisterDto {
   @Matches(/(\D*\d){2}/, { message: 'A senha deve conter ao menos 2 números' })
   @Matches(/[^A-Za-z0-9]/, { message: 'A senha deve conter ao menos 1 caractere especial' })
   password: string;
+
+  @IsString()
+  recaptchaToken: string;
 }

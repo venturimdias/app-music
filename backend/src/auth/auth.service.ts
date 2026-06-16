@@ -21,7 +21,7 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto): Promise<User> {
     const exists = await this.users.findOne({ where: { email: dto.email } });
     if (exists) throw new ConflictException('Email já cadastrado');
 
@@ -33,7 +33,7 @@ export class AuthService {
     const freePlan = await this.plans.findOne({ where: { is_free: true } });
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = await this.users.save(
+    const saved = await this.users.save(
       this.users.create({
         nome: dto.nome,
         email: dto.email,
@@ -43,7 +43,8 @@ export class AuthService {
       }),
     );
 
-    return { id: user.id, nome: user.nome, email: user.email, perfilId: user.perfilId };
+    // Recarrega para trazer a relação "perfil" (eager), usada no signToken.
+    return this.users.findOne({ where: { id: saved.id } });
   }
 
   async validateUser(email: string, password: string): Promise<User> {

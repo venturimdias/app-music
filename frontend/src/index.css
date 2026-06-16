@@ -5,3 +5,9 @@
   color: #4f46e5;
   font-weight: 700;
 }
+
+/* Badge flutuante do reCAPTCHA v3 escondido em todo o app — o texto de
+   atribuição obrigatório do Google fica só nas páginas de Login/Register. */
+.grecaptcha-badge {
+  visibility: hidden;
+}
