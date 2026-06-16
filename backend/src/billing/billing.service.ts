@@ -181,28 +181,21 @@ export class BillingService implements OnApplicationBootstrap {
       }),
     );
 
-    // Busca a primeira cobrança já gerada pelo Asaas para retornar o QR
-    const cobranca = await this.asaas.buscarPrimeiraCobranca(asaasSub.id);
-    if (!cobranca) {
-      throw new BadRequestException(
-        'Assinatura criada mas cobrança PIX ainda não disponível. Tente novamente em instantes.',
-      );
-    }
+    // A primeira cobrança e o QR PIX podem demorar a ficar disponíveis no Asaas;
+    // tenta algumas vezes com pequeno intervalo antes de desistir.
+    const resultado = await this.asaas.obterPixComRetry(asaasSub.id);
 
-    // pixTransaction pode não vir na lista — busca via endpoint dedicado
-    const pix = cobranca.pixTransaction ?? await this.asaas.buscarPixQrCode(cobranca.id);
-
-    if (!pix) {
+    if (!resultado) {
       throw new BadRequestException(
-        'QR code PIX não disponível no momento. Tente novamente em instantes.',
+        'QR code PIX ainda está sendo gerado. Abra "Minha assinatura" em instantes para ver o código.',
       );
     }
 
     return {
       provider: 'asaas',
-      pixQrCode: `data:image/png;base64,${pix.qrCode}`,
-      pixCopiaECola: pix.payload,
-      expiresAt: pix.expirationDate,
+      pixQrCode: `data:image/png;base64,${resultado.pix.qrCode}`,
+      pixCopiaECola: resultado.pix.payload,
+      expiresAt: resultado.pix.expirationDate,
     };
   }
 

@@ -149,6 +149,7 @@ export class AsaasService {
         payload: string;
         expirationDate: string | null;
       }>('GET', `/payments/${paymentId}/pixQrCode`);
+      if (!res.payload) return null;
       return {
         qrCode: res.encodedImage,
         payload: res.payload,
@@ -157,6 +158,30 @@ export class AsaasService {
     } catch {
       return null;
     }
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // Logo após criar a assinatura, a primeira cobrança e o QR PIX podem demorar
+  // alguns instantes para ficar disponíveis no Asaas. Tenta algumas vezes.
+  async obterPixComRetry(
+    asaasSubId: string,
+    tentativas = 6,
+  ): Promise<{ pix: AsaasPixTransaction; paymentId: string; value: number } | null> {
+    for (let i = 0; i < tentativas; i++) {
+      const cobranca = await this.buscarPrimeiraCobranca(asaasSubId);
+      if (cobranca) {
+        const pix = cobranca.pixTransaction ?? (await this.buscarPixQrCode(cobranca.id));
+        if (pix?.payload) {
+          return { pix, paymentId: cobranca.id, value: cobranca.value };
+        }
+      }
+      if (i < tentativas - 1) await this.sleep(1500);
+    }
+    this.logger.error(`Asaas: QR PIX não disponível após ${tentativas} tentativas (sub ${asaasSubId})`);
+    return null;
   }
 
   async cancelarAssinatura(asaasSubId: string): Promise<void> {
