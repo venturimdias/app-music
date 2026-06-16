@@ -141,6 +141,24 @@ export class AsaasService {
     return sorted[0] ?? null;
   }
 
+  // O endpoint de lista não inclui pixTransaction — busca o QR diretamente
+  async buscarPixQrCode(paymentId: string): Promise<AsaasPixTransaction | null> {
+    try {
+      const res = await this.req<{
+        encodedImage: string;
+        payload: string;
+        expirationDate: string | null;
+      }>('GET', `/payments/${paymentId}/pixQrCode`);
+      return {
+        qrCode: res.encodedImage,
+        payload: res.payload,
+        expirationDate: res.expirationDate,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   async cancelarAssinatura(asaasSubId: string): Promise<void> {
     await this.req('DELETE', `/subscriptions/${asaasSubId}`);
   }

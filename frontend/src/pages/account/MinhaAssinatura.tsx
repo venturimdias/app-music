@@ -58,16 +58,7 @@ function PixPendenteCard({ asaasSubId, onPago }: { asaasSubId: string; onPago: (
   async function carregarPix() {
     try {
       const res = await api.get<PixPendente | null>('/billing/minha-assinatura/pix-pendente');
-      const pixData = res.data ?? null;
-      setPix(pixData);
-      // Sem cobrança pendente — o backend já pode ter sincronizado o status; verifica imediatamente
-      if (!pixData) {
-        const subRes = await api.get<Subscription | null>(`/billing/minha-assinatura?_t=${Date.now()}`);
-        if (subRes.data?.status === 'active') {
-          clearInterval(intervalRef.current ?? undefined);
-          onPago();
-        }
-      }
+      setPix(res.data ?? null);
     } catch {
       setPix(null);
     }
@@ -270,7 +261,7 @@ export function MinhaAssinatura() {
             )}
           </dl>
 
-          {(assinatura.status === 'active' || assinatura.status === 'past_due') && (
+          {(assinatura.status === 'active' || assinatura.status === 'past_due' || assinatura.status === 'pending') && (
             <div className="mt-6 border-t border-slate-100 pt-4">
               {!mostrarCancelar ? (
                 <button

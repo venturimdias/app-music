@@ -63,6 +63,13 @@ export class BillingService implements OnApplicationBootstrap {
         { userId, status: 'pending' },
       ],
     });
+    // Assinatura Asaas pendente + novo PIX: retorna QR existente em vez de conflito
+    if (existing && existing.status === 'pending' && existing.provider === 'asaas' && dto.payment_method === 'pix') {
+      const pixData = await this.pixPendente(userId);
+      if (pixData) {
+        return { provider: 'asaas', pixQrCode: pixData.pixQrCode, pixCopiaECola: pixData.pixCopiaECola, expiresAt: pixData.expiresAt };
+      }
+    }
     if (existing) {
       throw new ConflictException('Você já tem uma assinatura ativa ou pendente.');
     }
@@ -176,11 +183,18 @@ export class BillingService implements OnApplicationBootstrap {
 
     // Busca a primeira cobrança já gerada pelo Asaas para retornar o QR
     const cobranca = await this.asaas.buscarPrimeiraCobranca(asaasSub.id);
-    const pix = cobranca?.pixTransaction;
+    if (!cobranca) {
+      throw new BadRequestException(
+        'Assinatura criada mas cobrança PIX ainda não disponível. Tente novamente em instantes.',
+      );
+    }
+
+    // pixTransaction pode não vir na lista — busca via endpoint dedicado
+    const pix = cobranca.pixTransaction ?? await this.asaas.buscarPixQrCode(cobranca.id);
 
     if (!pix) {
       throw new BadRequestException(
-        'Assinatura criada mas QR code PIX ainda não disponível. Tente novamente em instantes.',
+        'QR code PIX não disponível no momento. Tente novamente em instantes.',
       );
     }
 
@@ -222,7 +236,7 @@ export class BillingService implements OnApplicationBootstrap {
     const cobracasPendentes = await this.asaas.buscarCobrancasPendentes(sub.asaas_subscription_id);
     const cobranca = cobracasPendentes[0];
 
-    if (!cobranca?.pixTransaction) {
+    if (!cobranca) {
       // Sem cobrança pendente — verifica se a primeira já foi paga e o webhook falhou
       if (sub.status === 'pending' || sub.status === 'past_due') {
         const primeira = await this.asaas.buscarPrimeiraCobranca(sub.asaas_subscription_id);
@@ -238,10 +252,14 @@ export class BillingService implements OnApplicationBootstrap {
       return null;
     }
 
+    // pixTransaction pode não vir na lista — busca via endpoint dedicado
+    const pix = cobranca.pixTransaction ?? await this.asaas.buscarPixQrCode(cobranca.id);
+    if (!pix) return null;
+
     return {
-      pixQrCode: `data:image/png;base64,${cobranca.pixTransaction.qrCode}`,
-      pixCopiaECola: cobranca.pixTransaction.payload,
-      expiresAt: cobranca.pixTransaction.expirationDate,
+      pixQrCode: `data:image/png;base64,${pix.qrCode}`,
+      pixCopiaECola: pix.payload,
+      expiresAt: pix.expirationDate,
       value: cobranca.value,
       asaasPaymentId: cobranca.id,
     };
