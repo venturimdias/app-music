@@ -25,7 +25,7 @@ export function BillingPix() {
     // Polling: verifica se a assinatura ficou ativa
     intervalRef.current = setInterval(async () => {
       try {
-        const res = await api.get<Subscription | null>('/billing/minha-assinatura');
+        const res = await api.get<Subscription | null>(`/billing/minha-assinatura?_t=${Date.now()}`);
         if (res.data?.status === 'active') {
           clearInterval(intervalRef.current!);
           navigate('/billing/sucesso', { replace: true });

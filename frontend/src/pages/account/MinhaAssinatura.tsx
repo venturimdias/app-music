@@ -37,7 +37,7 @@ function PixPendenteCard({ asaasSubId }: { asaasSubId: string }) {
 
     intervalRef.current = setInterval(async () => {
       try {
-        const res = await api.get<Subscription | null>('/billing/minha-assinatura');
+        const res = await api.get<Subscription | null>(`/billing/minha-assinatura?_t=${Date.now()}`);
         if (res.data?.status === 'active') {
           clearInterval(intervalRef.current!);
           setPix(null);

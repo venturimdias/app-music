@@ -20,6 +20,13 @@ async function bootstrap() {
   });
 
   app.use(cookieParser());
+
+  // Disable HTTP caching for all API responses so polling always gets fresh data
+  app.use((_req: any, res: any, next: any) => {
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, transform: true }),
   );
