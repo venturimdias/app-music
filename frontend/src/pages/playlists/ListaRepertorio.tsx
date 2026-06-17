@@ -25,7 +25,8 @@ export function ListaRepertorio() {
   const [senha, setSenha] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [playlist, setPlaylist] = useState<PlaylistPublica | null>(null);
-  const [abertaId, setAbertaId] = useState<number | null>(null);
+  // Lista aberta por padrão: rastreamos as músicas FECHADas (vazio = todas abertas).
+  const [fechadas, setFechadas] = useState<Set<number>>(new Set());
   const [salvarOffline, setSalvarOffline] = useState(false);
   const [aba, setAba] = useState<Aba>('playlist');
 
@@ -155,6 +156,15 @@ export function ListaRepertorio() {
     toast('Repertório salvo para uso offline');
   }
 
+  function alternarMusica(id: number) {
+    setFechadas((prev) => {
+      const nova = new Set(prev);
+      if (nova.has(id)) nova.delete(id);
+      else nova.add(id);
+      return nova;
+    });
+  }
+
   if (!playlist) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
@@ -274,8 +284,11 @@ export function ListaRepertorio() {
             ) : (
               <ul className="space-y-3">
                 {musicas.map((m, idx) => {
-                  const aberta = abertaId === m.id;
+                  const aberta = !fechadas.has(m.id);
                   const tomAtivo = tomsAtivos[m.id] ?? m.tom;
+                  const momentoStr = (m.song.momentos ?? [])
+                    .map((x) => x.titulo)
+                    .join(', ');
                   const textoTransposto =
                     tomAtivo === m.song.tom
                       ? m.song.descricao
@@ -292,14 +305,19 @@ export function ListaRepertorio() {
                   return (
                     <li key={m.id} className="overflow-hidden rounded-xl bg-white shadow">
                       <button
-                        onClick={() => setAbertaId(aberta ? null : m.id)}
+                        onClick={() => alternarMusica(m.id)}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
                       >
                         <span className="w-6 text-right text-sm font-bold text-slate-400">
                           {idx + 1}.
                         </span>
-                        <span className="font-medium text-slate-800">
-                          {m.song.titulo}
+                        <span className="flex min-w-0 flex-col">
+                          <span className="font-medium text-slate-800">
+                            {m.song.titulo}
+                          </span>
+                          {momentoStr && (
+                            <span className="text-xs text-slate-400">{momentoStr}</span>
+                          )}
                         </span>
                         <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">
                           Tom: {tomAtivo}
