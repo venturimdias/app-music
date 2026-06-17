@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
@@ -20,11 +20,58 @@ function NavItem({ to, label }: { to: string; label: string }) {
   );
 }
 
-function SectionLabel({ label }: { label: string }) {
+function Chevron({ aberto }: { aberto: boolean }) {
   return (
-    <p className="mt-5 mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-      {label}
-    </p>
+    <svg
+      className={`h-3 w-3 transition-transform ${aberto ? '' : '-rotate-90'}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
+// Grupo de navegação recolhível. A preferência (aberto/fechado) é lembrada
+// no localStorage para sobreviver a recarregamentos.
+function NavGroup({
+  label,
+  storageKey,
+  defaultOpen = false,
+  children,
+}: {
+  label: string;
+  storageKey: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [aberto, setAberto] = useState(() => {
+    const v = localStorage.getItem(storageKey);
+    return v === null ? defaultOpen : v === '1'; // sem preferência salva, usa o default do grupo
+  });
+
+  function alternar() {
+    setAberto((atual) => {
+      const novo = !atual;
+      localStorage.setItem(storageKey, novo ? '1' : '0');
+      return novo;
+    });
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={alternar}
+        aria-expanded={aberto}
+        className="mt-5 mb-1 flex w-full items-center justify-between rounded px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 transition-colors hover:text-slate-300"
+      >
+        <span>{label}</span>
+        <Chevron aberto={aberto} />
+      </button>
+      {aberto && <div>{children}</div>}
+    </div>
   );
 }
 
@@ -48,34 +95,37 @@ export function Layout() {
 
       {/* Links */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <SectionLabel label="Cadastros" />
-        <NavItem to="/songs" label="Músicas" />
-        <NavItem to="/playlists" label="Playlists" />
+        <NavGroup label="Cadastros" storageKey="nav:cadastros" defaultOpen>
+          <NavItem to="/songs" label="Músicas" />
+          <NavItem to="/playlists" label="Playlists" />
 
-        {user?.perfil === 'ADM' && (
-          <>
-            <NavItem to="/tempo" label="Tempos litúrgicos" />
-            <NavItem to="/momento" label="Momentos litúrgicos" />
-            <NavItem to="/artista" label="Artistas" />
-          </>
-        )}
+          {user?.perfil === 'ADM' && (
+            <>
+              <NavItem to="/tempo" label="Tempos litúrgicos" />
+              <NavItem to="/momento" label="Momentos litúrgicos" />
+              <NavItem to="/artista" label="Artistas" />
+            </>
+          )}
+        </NavGroup>
 
-        <SectionLabel label="Administração" />
-        {user?.perfil === 'PARTICIPANTE' && (
-          <>
-            <NavItem to="/planos" label="Planos" />
-            <NavItem to="/account/subscription" label="Minha assinatura" />
-          </>
-        )}
+        <NavGroup label="Administração" storageKey="nav:administracao">
+          <NavItem to="/account/password" label="Alterar senha" />
+          {user?.perfil === 'PARTICIPANTE' && (
+            <>
+              <NavItem to="/planos" label="Planos" />
+              <NavItem to="/account/subscription" label="Minha assinatura" />
+            </>
+          )}
 
-        {user?.perfil === 'ADM' && (
-          <>
-            <NavItem to="/admin/planos" label="Planos" />
-            <NavItem to="/admin/pagamentos" label="Pagamentos" />
-            <NavItem to="/usuario" label="Usuários" />
-            <NavItem to="/perfil" label="Perfis" />
-          </>
-        )}
+          {user?.perfil === 'ADM' && (
+            <>
+              <NavItem to="/admin/planos" label="Planos" />
+              <NavItem to="/admin/pagamentos" label="Pagamentos" />
+              <NavItem to="/usuario" label="Usuários" />
+              <NavItem to="/perfil" label="Perfis" />
+            </>
+          )}
+        </NavGroup>
       </nav>
 
       {/* Rodapé: usuário + sair */}

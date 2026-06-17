@@ -4,23 +4,9 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { PasswordInput } from '../components/PasswordInput';
+import { ForcaSenha } from '../components/ForcaSenha';
+import { senhaValida as checarSenha } from '../utils/senha';
 import { RecaptchaError, obterTokenRecaptcha } from '../auth/recaptcha';
-
-// Regras da senha
-const REGRAS = [
-  { label: '1 letra maiúscula',  ok: (v: string) => /[A-Z]/.test(v) },
-  { label: '1 letra minúscula',  ok: (v: string) => /[a-z]/.test(v) },
-  { label: '2 números',          ok: (v: string) => (v.match(/\d/g) ?? []).length >= 2 },
-  { label: '1 caractere especial', ok: (v: string) => /[^A-Za-z0-9]/.test(v) },
-  { label: 'mínimo 8 caracteres', ok: (v: string) => v.length >= 8 },
-];
-
-function forcaSenha(senha: string): number {
-  return REGRAS.filter((r) => r.ok(senha)).length; // 0–5
-}
-
-const barraColor = ['bg-red-500', 'bg-red-400', 'bg-amber-400', 'bg-amber-400', 'bg-emerald-500', 'bg-emerald-500'];
-const barraLabel = ['', 'Muito fraca', 'Fraca', 'Média', 'Boa', 'Forte'];
 
 const inputClass =
   'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:border-indigo-500';
@@ -37,8 +23,7 @@ export function Register() {
   const [confirmar, setConfirmar] = useState('');
   const [enviando, setEnviando] = useState(false);
 
-  const forca = forcaSenha(password);
-  const senhaValida = forca === REGRAS.length;
+  const senhaValida = checarSenha(password);
   const senhasIguais = password === confirmar;
 
   async function handleSubmit(e: FormEvent) {
@@ -101,35 +86,8 @@ export function Register() {
           className={`${inputClass} border-slate-300`}
         />
 
-        {/* Barra de força */}
-        <div className="mt-2 mb-1">
-            <div className="flex gap-1">
-              {REGRAS.map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-1 flex-1 rounded-full transition-colors ${
-                    i < forca ? barraColor[forca] : 'bg-slate-200'
-                  }`}
-                />
-              ))}
-            </div>
-            <p className={`mt-1 text-xs font-medium ${forca >= 4 ? 'text-emerald-600' : 'text-amber-600'}`}>
-              {barraLabel[forca]}
-            </p>
-          </div>
-
-        {/* Checklist de requisitos */}
-        <ul className="mb-4 mt-2 space-y-0.5">
-            {REGRAS.map((r) => {
-              const ok = r.ok(password);
-              return (
-                <li key={r.label} className={`flex items-center gap-1.5 text-xs ${ok ? 'text-emerald-600' : 'text-slate-400'}`}>
-                  <span className="text-base leading-none">{ok ? '✓' : '○'}</span>
-                  {r.label}
-                </li>
-              );
-            })}
-          </ul>
+        {/* Barra de força + checklist de requisitos */}
+        <ForcaSenha senha={password} />
 
         {/* Confirmar senha */}
         <label className="mb-1 block text-sm font-medium text-slate-700">Confirmar senha</label>

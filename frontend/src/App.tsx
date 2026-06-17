@@ -17,6 +17,7 @@ import { Planos } from './pages/planos/Planos';
 import { AdminPlanos } from './pages/adm/AdminPlanos';
 import { AdminPagamentos } from './pages/adm/AdminPagamentos';
 import { MinhaAssinatura } from './pages/account/MinhaAssinatura';
+import { AlterarSenha } from './pages/account/AlterarSenha';
 import { BillingSucesso } from './pages/billing/BillingSucesso';
 import { BillingCancelado } from './pages/billing/BillingCancelado';
 import { BillingPix } from './pages/billing/BillingPix';
@@ -51,6 +52,7 @@ export function App() {
           <Route path="/playlists/:id" element={<PlaylistDetalhe />} />
           <Route path="/planos" element={<Planos />} />
           <Route path="/account/subscription" element={<MinhaAssinatura />} />
+          <Route path="/account/password" element={<AlterarSenha />} />
 
           {/* Só ADM */}
           <Route element={<RequireAdm />}>

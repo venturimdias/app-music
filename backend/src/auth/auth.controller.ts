@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   Post,
+  Put,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { AuthService } from './auth.service';
 import { RecaptchaService } from './recaptcha.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser, AuthUser } from './decorators/current-user.decorator';
 
@@ -65,6 +67,16 @@ export class AuthController {
       email: user.email,
       perfilId: user.perfilId,
     };
+  }
+
+  @Put('password')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  changePassword(
+    @CurrentUser('sub') userId: number,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.auth.changePassword(userId, dto);
   }
 
   @Post('logout')

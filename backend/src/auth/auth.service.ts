@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -11,6 +12,7 @@ import { User } from '../user/user.entity';
 import { Perfil } from '../perfil/perfil.entity';
 import { Plan } from '../plan/plan.entity';
 import { RegisterDto } from './dto/register.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -53,6 +55,23 @@ export class AuthService {
       throw new UnauthorizedException('Email ou senha inválidos');
     }
     return user;
+  }
+
+  // Troca a própria senha do usuário logado (exige a senha atual).
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('Usuário não encontrado');
+
+    const confere = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!confere) throw new UnauthorizedException('Senha atual incorreta');
+
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException('A nova senha deve ser diferente da atual');
+    }
+
+    user.passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.users.save(user);
+    return { ok: true };
   }
 
   signToken(user: User): string {
