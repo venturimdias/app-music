@@ -16,6 +16,7 @@ import { Perfil } from '../perfil/perfil.entity';
 import {
   AddSongDto,
   CreatePlaylistDto,
+  ReordenarDto,
   UpdatePlaylistDto,
 } from './playlist.dto';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
@@ -59,6 +60,9 @@ export class PlaylistService {
       }
     }
 
+    const salmo = dto.salmo?.trim() || null;
+    const antifona = dto.antifonaEvangelho?.trim() || null;
+
     const playlist = this.playlists.create({
       nome: dto.nome,
       data: new Date(dto.data),
@@ -66,8 +70,23 @@ export class PlaylistService {
       userId: currentUser.sub,
       senha: this.gerarSenha(),
       slug: `${currentUser.sub}-${randomUUID()}`,
+      // Sem músicas ainda: os itens litúrgicos abrem a lista (0 e 1).
+      salmo,
+      salmoOrdem: salmo ? 0 : null,
+      antifonaEvangelho: antifona,
+      antifonaEvangelhoOrdem: antifona ? 1 : null,
     });
     return this.playlists.save(playlist);
+  }
+
+  // Próxima posição livre na lista (maior ordem entre músicas e itens
+  // litúrgicos + 1) — usada ao adicionar um item litúrgico depois.
+  private async proximaOrdem(playlist: Playlist): Promise<number> {
+    const itens = await this.playlistSongs.find({ where: { playlistId: playlist.id } });
+    const ordens = itens.map((i) => i.ordem);
+    if (playlist.salmoOrdem != null) ordens.push(playlist.salmoOrdem);
+    if (playlist.antifonaEvangelhoOrdem != null) ordens.push(playlist.antifonaEvangelhoOrdem);
+    return ordens.length ? Math.max(...ordens) + 1 : 0;
   }
 
   findAllByUser(userId: number) {
@@ -133,7 +152,44 @@ export class PlaylistService {
     if (dto.nome !== undefined) playlist.nome = dto.nome;
     if (dto.data !== undefined) playlist.data = new Date(dto.data);
     if (dto.descricao !== undefined) playlist.descricao = dto.descricao;
+
+    // Salmo / Antífona: ao definir pela 1ª vez, posiciona no fim da lista;
+    // ao limpar (texto vazio), remove o item e zera sua ordem.
+    if (dto.salmo !== undefined) {
+      const novo = dto.salmo.trim() || null;
+      if (novo && !playlist.salmo) playlist.salmoOrdem = await this.proximaOrdem(playlist);
+      if (!novo) playlist.salmoOrdem = null;
+      playlist.salmo = novo;
+    }
+    if (dto.antifonaEvangelho !== undefined) {
+      const novo = dto.antifonaEvangelho.trim() || null;
+      if (novo && !playlist.antifonaEvangelho)
+        playlist.antifonaEvangelhoOrdem = await this.proximaOrdem(playlist);
+      if (!novo) playlist.antifonaEvangelhoOrdem = null;
+      playlist.antifonaEvangelho = novo;
+    }
     return this.playlists.save(playlist);
+  }
+
+  // Reordena a lista inteira (músicas + itens litúrgicos): a posição de cada
+  // item passa a ser o seu índice no array recebido.
+  async reordenar(id: number, userId: number, dto: ReordenarDto) {
+    const playlist = await this.assertOwner(id, userId);
+    for (let i = 0; i < dto.itens.length; i++) {
+      const it = dto.itens[i];
+      if (it.tipo === 'musica' && it.songId != null) {
+        await this.playlistSongs.update(
+          { playlistId: id, songId: it.songId },
+          { ordem: i },
+        );
+      } else if (it.tipo === 'salmo') {
+        playlist.salmoOrdem = i;
+      } else if (it.tipo === 'antifona') {
+        playlist.antifonaEvangelhoOrdem = i;
+      }
+    }
+    await this.playlists.save(playlist);
+    return this.montar(playlist);
   }
 
   async remove(id: number, userId: number) {

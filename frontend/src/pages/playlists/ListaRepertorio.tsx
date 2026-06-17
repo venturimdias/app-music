@@ -5,10 +5,15 @@ import { useToast } from '../../components/Toast';
 import { Oracoes } from '../../components/Oracoes';
 import { cifraParaHtml, soLetra, transporCifra } from '../../utils/cifra';
 import { TONS } from '../../types';
-import type { LiturgiaDia, PlaylistPublica } from '../../types';
+import type { LiturgiaDia, PlaylistMusica, PlaylistPublica } from '../../types';
 import { formatarData } from './Playlists';
 
 type Aba = 'playlist' | 'liturgia' | 'oracoes';
+
+// Item do repertório público: música ou um dos itens litúrgicos (Salmo/Antífona).
+type ItemPublico =
+  | { tipo: 'musica'; key: string; ordem: number; musica: PlaylistMusica }
+  | { tipo: 'salmo' | 'antifona'; key: string; ordem: number; texto: string };
 
 interface RepertorioSalvo {
   senha: string;
@@ -25,8 +30,8 @@ export function ListaRepertorio() {
   const [senha, setSenha] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [playlist, setPlaylist] = useState<PlaylistPublica | null>(null);
-  // Lista aberta por padrão: rastreamos as músicas FECHADas (vazio = todas abertas).
-  const [fechadas, setFechadas] = useState<Set<number>>(new Set());
+  // Lista aberta por padrão: rastreamos os itens FECHADos (vazio = todos abertos).
+  const [fechadas, setFechadas] = useState<Set<string>>(new Set());
   const [salvarOffline, setSalvarOffline] = useState(false);
   const [aba, setAba] = useState<Aba>('playlist');
 
@@ -156,11 +161,11 @@ export function ListaRepertorio() {
     toast('Repertório salvo para uso offline');
   }
 
-  function alternarMusica(id: number) {
+  function alternar(key: string) {
     setFechadas((prev) => {
       const nova = new Set(prev);
-      if (nova.has(id)) nova.delete(id);
-      else nova.add(id);
+      if (nova.has(key)) nova.delete(key);
+      else nova.add(key);
       return nova;
     });
   }
@@ -204,6 +209,32 @@ export function ListaRepertorio() {
   }
 
   const musicas = playlist.musicas ?? [];
+
+  // Lista unificada (músicas + Salmo + Antífona) ordenada por `ordem`.
+  const itens: ItemPublico[] = musicas.map((m) => ({
+    tipo: 'musica' as const,
+    key: `m-${m.id}`,
+    ordem: m.ordem,
+    musica: m,
+  }));
+  if (playlist.salmo) {
+    itens.push({
+      tipo: 'salmo',
+      key: 'salmo',
+      ordem: playlist.salmoOrdem ?? 9999,
+      texto: playlist.salmo,
+    });
+  }
+  if (playlist.antifonaEvangelho) {
+    itens.push({
+      tipo: 'antifona',
+      key: 'antifona',
+      ordem: playlist.antifonaEvangelhoOrdem ?? 9999,
+      texto: playlist.antifonaEvangelho,
+    });
+  }
+  itens.sort((a, b) => a.ordem - b.ordem);
+
   const abas: { id: Aba; label: string }[] = [
     { id: 'playlist', label: 'Playlist' },
     { id: 'liturgia', label: 'Liturgia' },
@@ -277,14 +308,50 @@ export function ListaRepertorio() {
               </div>
             </div>
 
-            {musicas.length === 0 ? (
+            {itens.length === 0 ? (
               <p className="py-10 text-center text-slate-400">
-                Esta playlist ainda não tem músicas.
+                Esta playlist ainda não tem itens.
               </p>
             ) : (
               <ul className="space-y-3">
-                {musicas.map((m, idx) => {
-                  const aberta = !fechadas.has(m.id);
+                {itens.map((item, idx) => {
+                  const aberta = !fechadas.has(item.key);
+
+                  // ── Itens litúrgicos (Salmo / Antífona do Evangelho) ──
+                  if (item.tipo !== 'musica') {
+                    return (
+                      <li key={item.key} className="overflow-hidden rounded-xl bg-white shadow">
+                        <button
+                          onClick={() => alternar(item.key)}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
+                        >
+                          <span className="w-6 text-right text-sm font-bold text-slate-400">
+                            {idx + 1}.
+                          </span>
+                          <span className="font-medium text-slate-800">
+                            {item.tipo === 'salmo' ? 'Salmo responsorial' : 'Antífona do Evangelho'}
+                          </span>
+                          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-700">
+                            Liturgia
+                          </span>
+                          <span className="ml-auto text-slate-400">
+                            {aberta ? '▲' : '▼'}
+                          </span>
+                        </button>
+
+                        {aberta && (
+                          <div className="border-t border-slate-100 px-4 py-4">
+                            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                              {item.texto}
+                            </p>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  }
+
+                  // ── Música ──
+                  const m = item.musica;
                   const tomAtivo = tomsAtivos[m.id] ?? m.tom;
                   const momentoStr = (m.song.momentos ?? [])
                     .map((x) => x.titulo)
@@ -303,9 +370,9 @@ export function ListaRepertorio() {
                   ].filter((l) => l.url);
 
                   return (
-                    <li key={m.id} className="overflow-hidden rounded-xl bg-white shadow">
+                    <li key={item.key} className="overflow-hidden rounded-xl bg-white shadow">
                       <button
-                        onClick={() => alternarMusica(m.id)}
+                        onClick={() => alternar(item.key)}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
                       >
                         <span className="w-6 text-right text-sm font-bold text-slate-400">

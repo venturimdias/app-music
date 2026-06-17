@@ -40,6 +40,21 @@ export class Playlist {
   @Column({ default: false })
   bloqueada: boolean;
 
+  // Salmo responsorial e antífona do Evangelho (texto livre, opcionais).
+  // Cada um é exibido como um item ordenável na lista do repertório, então
+  // guarda também sua posição (ordem) junto às músicas. null = não definido.
+  @Column({ type: 'text', nullable: true })
+  salmo: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  salmoOrdem: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  antifonaEvangelho: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  antifonaEvangelhoOrdem: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -12,6 +12,7 @@ import { PlaylistService } from './playlist.service';
 import {
   AddSongDto,
   CreatePlaylistDto,
+  ReordenarDto,
   UpdatePlaylistDto,
 } from './playlist.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -49,6 +50,15 @@ export class PlaylistController {
   @Delete(':id')
   remove(@CurrentUser('sub') userId: number, @Param('id') id: string) {
     return this.service.remove(+id, userId);
+  }
+
+  @Put(':id/reordenar')
+  reordenar(
+    @CurrentUser('sub') userId: number,
+    @Param('id') id: string,
+    @Body() dto: ReordenarDto,
+  ) {
+    return this.service.reordenar(+id, userId, dto);
   }
 
   @Post(':id/songs')

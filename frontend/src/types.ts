@@ -82,6 +82,10 @@ export interface Playlist {
   userId: number;
   createdAt: string;
   bloqueada: boolean;
+  salmo?: string | null;
+  salmoOrdem?: number | null;
+  antifonaEvangelho?: string | null;
+  antifonaEvangelhoOrdem?: number | null;
   musicas?: PlaylistMusica[];
 }
 

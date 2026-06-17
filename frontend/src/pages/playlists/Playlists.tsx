@@ -20,6 +20,8 @@ export function Playlists() {
   const [nome, setNome] = useState('');
   const [data, setData] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [salmo, setSalmo] = useState('');
+  const [antifonaEvangelho, setAntifonaEvangelho] = useState('');
   const [salvando, setSalvando] = useState(false);
 
   async function carregar() {
@@ -40,6 +42,8 @@ export function Playlists() {
     setNome('');
     setData('');
     setDescricao('');
+    setSalmo('');
+    setAntifonaEvangelho('');
     setModalAberto(true);
   }
 
@@ -51,6 +55,8 @@ export function Playlists() {
         nome,
         data,
         descricao: descricao || undefined,
+        salmo: salmo || undefined,
+        antifonaEvangelho: antifonaEvangelho || undefined,
       });
       toast('Playlist criada');
       navigate(`/playlists/${res.data.id}`);
@@ -202,6 +208,28 @@ export function Playlists() {
           <input
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
+            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          />
+
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Salmo responsorial <span className="font-normal text-slate-400">(opcional)</span>
+          </label>
+          <textarea
+            value={salmo}
+            onChange={(e) => setSalmo(e.target.value)}
+            rows={3}
+            placeholder="R. Refrão&#10;Versículos do salmo…"
+            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          />
+
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Antífona do Evangelho <span className="font-normal text-slate-400">(opcional)</span>
+          </label>
+          <textarea
+            value={antifonaEvangelho}
+            onChange={(e) => setAntifonaEvangelho(e.target.value)}
+            rows={2}
+            placeholder="Aleluia, aleluia…"
             className="mb-6 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           />
 
