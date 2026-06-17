@@ -11,3 +11,42 @@
 .grecaptcha-badge {
   visibility: hidden;
 }
+
+/* Renderização do markdown das Orações Eucarísticas (componente Oracoes). */
+.markdown h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+.markdown h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4338ca;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+.markdown p {
+  font-size: 0.875rem;
+  line-height: 1.75rem;
+  color: #334155;
+  margin-bottom: 0.75rem;
+}
+.markdown blockquote {
+  border-left: 4px solid #fcd34d;
+  background: #fffbeb;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  color: #57534e;
+  font-size: 0.875rem;
+}
+.markdown em {
+  color: #64748b;
+}
+.markdown ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: #334155;
+  margin-bottom: 0.75rem;
+}
