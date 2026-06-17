@@ -103,7 +103,17 @@ export function ListaRepertorio() {
       .post<PlaylistPublica>(`/lista-repertorio/${slug}`, { senha: cache.senha })
       .then((res) => {
         setPlaylist(res.data);
-        gravarCache(cache.senha, res.data, cache.liturgia); // mantém a liturgia salva
+        // Se a data da playlist mudou, a liturgia cacheada é de outro dia:
+        // descarta para forçar nova busca (a aba rebusca ao ser aberta).
+        const dataPlaylist = res.data.data.slice(0, 10); // ISO → YYYY-MM-DD
+        const liturgiaDefasada =
+          !!cache.liturgia && cache.liturgia.data !== dataPlaylist;
+        if (liturgiaDefasada) {
+          setLiturgia(undefined);
+          gravarCache(cache.senha, res.data, undefined);
+        } else {
+          gravarCache(cache.senha, res.data, cache.liturgia); // mantém a liturgia salva
+        }
       })
       .catch((error) => {
         // Playlist excluída (404) ou senha não confere mais (401):
