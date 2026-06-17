@@ -12,6 +12,7 @@ import { Playlist } from './playlist.entity';
 import { PlaylistSong } from './playlist-song.entity';
 import { SongTom } from '../song/song-tom.entity';
 import { User } from '../user/user.entity';
+import { Perfil } from '../perfil/perfil.entity';
 import {
   AddSongDto,
   CreatePlaylistDto,
@@ -26,6 +27,7 @@ export class PlaylistService {
     @InjectRepository(PlaylistSong) private readonly playlistSongs: Repository<PlaylistSong>,
     @InjectRepository(SongTom) private readonly songToms: Repository<SongTom>,
     @InjectRepository(User) private readonly users: Repository<User>,
+    @InjectRepository(Perfil) private readonly perfis: Repository<Perfil>,
   ) {}
 
   private gerarSenha(): string {
@@ -133,8 +135,24 @@ export class PlaylistService {
     return { deleted: true };
   }
 
-  async addSong(id: number, userId: number, dto: AddSongDto) {
-    await this.assertOwner(id, userId);
+  async addSong(id: number, currentUser: AuthUser, dto: AddSongDto) {
+    await this.assertOwner(id, currentUser.sub);
+
+    // Limite de músicas por playlist conforme o perfil (ex.: DEMO = 4).
+    // null = sem limite (ADM/PARTICIPANTE por padrão).
+    const perfil = await this.perfis.findOne({ where: { id: currentUser.perfilId } });
+    const limite = perfil?.max_songs_per_playlist ?? null;
+    if (limite != null) {
+      const count = await this.playlistSongs.count({ where: { playlistId: id } });
+      if (count >= limite) {
+        throw new ForbiddenException({
+          message: `Seu perfil (${perfil.titulo}) permite no máximo ${limite} música(s) por playlist.`,
+          code: 'LIMITE_MUSICAS_PERFIL',
+          limit: limite,
+        });
+      }
+    }
+
     const existe = await this.playlistSongs.findOne({
       where: { playlistId: id, songId: dto.songId },
     });

@@ -20,10 +20,21 @@ export class SeedService implements OnApplicationBootstrap {
   }
 
   private async seedPerfis() {
-    const total = await this.perfilRepo.count();
-    if (total === 0) {
-      await this.perfilRepo.save([{ titulo: 'ADM' }, { titulo: 'PARTICIPANTE' }]);
-      console.log('[seed] Perfis criados: ADM, PARTICIPANTE');
+    // Idempotente: garante que cada perfil exista mesmo em banco já populado
+    // (sem sobrescrever um perfil existente, para preservar edições do admin).
+    const desejados: Array<{ titulo: string; max_songs_per_playlist: number | null }> = [
+      { titulo: 'ADM', max_songs_per_playlist: null },
+      { titulo: 'PARTICIPANTE', max_songs_per_playlist: null },
+      { titulo: 'DEMO', max_songs_per_playlist: 4 },
+    ];
+    for (const d of desejados) {
+      const existe = await this.perfilRepo.findOne({ where: { titulo: d.titulo } });
+      if (!existe) {
+        await this.perfilRepo.save(this.perfilRepo.create(d));
+        console.log(
+          `[seed] Perfil criado: ${d.titulo} (limite músicas/playlist: ${d.max_songs_per_playlist ?? 'sem limite'})`,
+        );
+      }
     }
   }
 

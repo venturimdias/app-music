@@ -15,6 +15,7 @@ export interface Plan {
 export interface Perfil {
   id: number;
   titulo: string;
+  max_songs_per_playlist: number | null; // limite de músicas por playlist; null = sem limite
 }
 
 export interface Usuario {

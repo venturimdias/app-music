@@ -53,11 +53,11 @@ export class PlaylistController {
 
   @Post(':id/songs')
   addSong(
-    @CurrentUser('sub') userId: number,
+    @CurrentUser() user: AuthUser,
     @Param('id') id: string,
     @Body() dto: AddSongDto,
   ) {
-    return this.service.addSong(+id, userId, dto);
+    return this.service.addSong(+id, user, dto);
   }
 
   @Delete(':id/songs/:songId')

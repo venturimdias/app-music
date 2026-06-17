@@ -12,7 +12,7 @@ export interface AuthUser {
   sub: number;
   email: string;
   perfilId: number;
-  perfil: 'ADM' | 'PARTICIPANTE';
+  perfil: 'ADM' | 'PARTICIPANTE' | 'DEMO';
   plan: Plan | null;
 }
 
