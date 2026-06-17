@@ -108,24 +108,26 @@ export function Layout() {
           )}
         </NavGroup>
 
-        <NavGroup label="Administração" storageKey="nav:administracao">
-          <NavItem to="/account/password" label="Alterar senha" />
-          {user?.perfil === 'PARTICIPANTE' && (
-            <>
-              <NavItem to="/planos" label="Planos" />
-              <NavItem to="/account/subscription" label="Minha assinatura" />
-            </>
-          )}
+        {user?.perfil !== 'DEMO' && (
+          <NavGroup label="Administração" storageKey="nav:administracao">
+            <NavItem to="/account/password" label="Alterar senha" />
+            {user?.perfil === 'PARTICIPANTE' && (
+              <>
+                <NavItem to="/planos" label="Planos" />
+                <NavItem to="/account/subscription" label="Minha assinatura" />
+              </>
+            )}
 
-          {user?.perfil === 'ADM' && (
-            <>
-              <NavItem to="/admin/planos" label="Planos" />
-              <NavItem to="/admin/pagamentos" label="Pagamentos" />
-              <NavItem to="/usuario" label="Usuários" />
-              <NavItem to="/perfil" label="Perfis" />
-            </>
-          )}
-        </NavGroup>
+            {user?.perfil === 'ADM' && (
+              <>
+                <NavItem to="/admin/planos" label="Planos" />
+                <NavItem to="/admin/pagamentos" label="Pagamentos" />
+                <NavItem to="/usuario" label="Usuários" />
+                <NavItem to="/perfil" label="Perfis" />
+              </>
+            )}
+          </NavGroup>
+        )}
       </nav>
 
       {/* Rodapé: usuário + sair */}

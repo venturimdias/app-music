@@ -29,3 +29,15 @@ export function RequireAdm() {
   }
   return <Outlet />;
 }
+
+// Páginas do grupo "Administração" não disponíveis ao perfil DEMO
+// (o menu já oculta o grupo; aqui bloqueamos o acesso direto via URL).
+export function RequireNotDemo() {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+  if (user?.perfil === 'DEMO') {
+    return <Navigate to="/songs" replace />;
+  }
+  return <Outlet />;
+}

@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
-import { RequireAdm, RequireAuth } from './auth/RequireAuth';
+import { RequireAdm, RequireAuth, RequireNotDemo } from './auth/RequireAuth';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -50,9 +50,13 @@ export function App() {
           <Route path="/songs/:id" element={<SongDetalhe />} />
           <Route path="/playlists" element={<Playlists />} />
           <Route path="/playlists/:id" element={<PlaylistDetalhe />} />
-          <Route path="/planos" element={<Planos />} />
-          <Route path="/account/subscription" element={<MinhaAssinatura />} />
-          <Route path="/account/password" element={<AlterarSenha />} />
+
+          {/* Grupo "Administração" — indisponível para DEMO */}
+          <Route element={<RequireNotDemo />}>
+            <Route path="/planos" element={<Planos />} />
+            <Route path="/account/subscription" element={<MinhaAssinatura />} />
+            <Route path="/account/password" element={<AlterarSenha />} />
+          </Route>
 
           {/* Só ADM */}
           <Route element={<RequireAdm />}>
