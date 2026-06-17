@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { Modal } from './Modal';
@@ -19,6 +19,10 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
   const [playlists, setPlaylists] = useState<Playlist[] | null>(null);
   const [playlistId, setPlaylistId] = useState(0);
   const [adicionando, setAdicionando] = useState(false);
+  // Detalhe da playlist selecionada (traz as músicas) — usado para saber se a
+  // música já está nela e para calcular a próxima ordem sem refazer o GET.
+  const [detalhe, setDetalhe] = useState<Playlist | null>(null);
+  const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
 
   async function abrir() {
     setAberto(true);
@@ -27,21 +31,43 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
     setPlaylistId(res.data[0]?.id ?? 0);
   }
 
+  // Ao trocar a playlist selecionada (com o modal aberto), busca o detalhe
+  // para descobrir se a música já está nela.
+  useEffect(() => {
+    if (!aberto || !playlistId) {
+      setDetalhe(null);
+      return;
+    }
+    let cancelado = false;
+    setCarregandoDetalhe(true);
+    setDetalhe(null);
+    api
+      .get<Playlist>(`/playlists/${playlistId}`)
+      .then((res) => {
+        if (!cancelado) setDetalhe(res.data);
+      })
+      .finally(() => {
+        if (!cancelado) setCarregandoDetalhe(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [aberto, playlistId]);
+
+  const jaNaPlaylist = detalhe?.musicas?.some((m) => m.song.id === song.id) ?? false;
+
   async function adicionar() {
-    if (!playlistId) return;
+    if (!playlistId || !detalhe || jaNaPlaylist) return;
     setAdicionando(true);
     try {
-      // A lista de playlists não traz as músicas — busca o detalhe
-      // para calcular a próxima ordem.
-      const res = await api.get<Playlist>(`/playlists/${playlistId}`);
-      const musicas = res.data.musicas ?? [];
+      const musicas = detalhe.musicas ?? [];
       const proximaOrdem =
         musicas.length > 0 ? Math.max(...musicas.map((m) => m.ordem)) + 1 : 1;
       await api.post(`/playlists/${playlistId}/songs`, {
         songId: song.id,
         ordem: proximaOrdem,
       });
-      toast(`"${song.titulo}" adicionada à playlist ${res.data.nome}`);
+      toast(`"${song.titulo}" adicionada à playlist ${detalhe.nome}`);
       setAberto(false);
     } catch {
       // erro (ex.: 409 música já está na playlist) já em toast pelo interceptor
@@ -52,7 +78,13 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
 
   return (
     <>
-      <button type="button" onClick={abrir} className={className} title="Adicionar a uma playlist">
+      <button
+        type="button"
+        onClick={abrir}
+        disabled={aberto || adicionando}
+        className={`${className ?? ''} disabled:cursor-not-allowed disabled:opacity-50`}
+        title="Adicionar a uma playlist"
+      >
         {children}
       </button>
 
@@ -79,7 +111,7 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
             <select
               value={playlistId}
               onChange={(e) => setPlaylistId(Number(e.target.value))}
-              className="mb-6 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
             >
               {playlists.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -87,6 +119,17 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
                 </option>
               ))}
             </select>
+
+            <p className="mb-6 mt-2 min-h-[1.25rem] text-xs">
+              {carregandoDetalhe ? (
+                <span className="text-slate-400">Verificando…</span>
+              ) : jaNaPlaylist ? (
+                <span className="font-medium text-amber-600">
+                  Esta música já está nesta playlist.
+                </span>
+              ) : null}
+            </p>
+
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -98,10 +141,10 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
               <button
                 type="button"
                 onClick={adicionar}
-                disabled={adicionando || !playlistId}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                disabled={adicionando || !playlistId || carregandoDetalhe || jaNaPlaylist}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {adicionando ? 'Adicionando…' : 'Adicionar'}
+                {adicionando ? 'Adicionando…' : jaNaPlaylist ? 'Já adicionada' : 'Adicionar'}
               </button>
             </div>
           </>
