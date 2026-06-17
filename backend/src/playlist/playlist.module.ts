@@ -9,11 +9,13 @@ import { PlaylistService } from './playlist.service';
 import { PlaylistController } from './playlist.controller';
 import { ListaRepertorioController } from './lista-repertorio.controller';
 import { AuthModule } from '../auth/auth.module';
+import { LiturgiaModule } from '../liturgia/liturgia.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Playlist, PlaylistSong, SongTom, User, Perfil]),
     AuthModule,
+    LiturgiaModule,
   ],
   controllers: [PlaylistController, ListaRepertorioController],
   providers: [PlaylistService],

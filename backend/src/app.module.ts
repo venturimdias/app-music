@@ -16,6 +16,7 @@ import { SongTomModule } from './song-tom/song-tom.module';
 import { PlaylistModule } from './playlist/playlist.module';
 import { PlanModule } from './plan/plan.module';
 import { BillingModule } from './billing/billing.module';
+import { LiturgiaModule } from './liturgia/liturgia.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { BillingModule } from './billing/billing.module';
     PlaylistModule,
     PlanModule,
     BillingModule,
+    LiturgiaModule,
   ],
   providers: [SeedService],
 })

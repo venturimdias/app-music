@@ -113,10 +113,17 @@ export class PlaylistService {
     return this.montar(playlist);
   }
 
-  async findPublic(slug: string, senha: string) {
+  // Valida o acesso externo (slug + senha) e devolve a playlist crua.
+  // Reutilizado pelo repertório público e pela liturgia do dia.
+  async validarSenha(slug: string, senha: string): Promise<Playlist> {
     const playlist = await this.playlists.findOne({ where: { slug } });
     if (!playlist) throw new NotFoundException('Playlist não encontrada');
     if (playlist.senha !== senha) throw new UnauthorizedException('Senha inválida');
+    return playlist;
+  }
+
+  async findPublic(slug: string, senha: string) {
+    const playlist = await this.validarSenha(slug, senha);
     const { senha: _senha, userId: _userId, ...publica } = await this.montar(playlist);
     return publica;
   }
