@@ -88,6 +88,22 @@ export interface Playlist {
 // Payload público de /lista-repertorio/:slug (sem senha e sem userId)
 export type PlaylistPublica = Omit<Playlist, 'senha' | 'userId'>;
 
+// Liturgia do dia (normalizada pelo backend — POST /lista-repertorio/:slug/liturgia)
+export interface LeituraLiturgia {
+  tipo: string;
+  referencia?: string;
+  titulo?: string;
+  refrao?: string; // só no salmo
+  texto: string;
+}
+export interface LiturgiaDia {
+  data: string;
+  titulo: string;
+  cor: string;
+  leituras: LeituraLiturgia[];
+  fonte: string;
+}
+
 export type SubscriptionStatus = 'pending' | 'active' | 'past_due' | 'canceled';
 export type BillingCycle = 'monthly' | 'yearly';
 

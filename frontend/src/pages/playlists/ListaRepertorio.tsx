@@ -2,20 +2,23 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useToast } from '../../components/Toast';
+import { Oracoes } from '../../components/Oracoes';
 import { cifraParaHtml, soLetra, transporCifra } from '../../utils/cifra';
 import { TONS } from '../../types';
-import type { PlaylistPublica } from '../../types';
+import type { LiturgiaDia, PlaylistPublica } from '../../types';
 import { formatarData } from './Playlists';
+
+type Aba = 'playlist' | 'liturgia' | 'oracoes';
 
 interface RepertorioSalvo {
   senha: string;
   playlist: PlaylistPublica;
+  liturgia?: LiturgiaDia; // salva junto quando offline está ligado
 }
 
-// Acesso externo (sem login): valida a senha de 5 caracteres e lista o repertório.
-// Toggle "Salvar offline": guarda senha + repertório no localStorage para acesso
-// rápido e sem conexão; nas visitas seguintes abre direto da cópia local e
-// revalida na API em segundo plano usando a senha guardada.
+// Acesso externo (sem login): valida a senha de 5 caracteres e exibe 3 abas —
+// Playlist, Liturgia do dia (API externa via backend) e Orações eucarísticas.
+// Toggle "Salvar offline": guarda senha + repertório + liturgia no localStorage.
 export function ListaRepertorio() {
   const { slug } = useParams();
   const { toast } = useToast();
@@ -24,6 +27,11 @@ export function ListaRepertorio() {
   const [playlist, setPlaylist] = useState<PlaylistPublica | null>(null);
   const [abertaId, setAbertaId] = useState<number | null>(null);
   const [salvarOffline, setSalvarOffline] = useState(false);
+  const [aba, setAba] = useState<Aba>('playlist');
+
+  // undefined = ainda não carregada; null = indisponível; objeto = ok
+  const [liturgia, setLiturgia] = useState<LiturgiaDia | null | undefined>(undefined);
+  const [carregandoLiturgia, setCarregandoLiturgia] = useState(false);
 
   // Tom ativo por música (id → tom escolhido); ausente = usa m.tom (SongTom)
   const [tomsAtivos, setTomsAtivos] = useState<Record<number, string>>({});
@@ -43,7 +51,7 @@ export function ListaRepertorio() {
         dados.playlist?.slug === slug &&
         Array.isArray(dados.playlist.musicas)
       ) {
-        return dados;
+        return dados; // liturgia é opcional (cache antigo não tem)
       }
     } catch {
       // JSON inválido — descarta abaixo
@@ -52,9 +60,27 @@ export function ListaRepertorio() {
     return null;
   }
 
-  function gravarCache(senhaOk: string, dados: PlaylistPublica) {
-    const salvo: RepertorioSalvo = { senha: senhaOk, playlist: dados };
+  function gravarCache(senhaOk: string, dados: PlaylistPublica, lit?: LiturgiaDia) {
+    const salvo: RepertorioSalvo = { senha: senhaOk, playlist: dados, liturgia: lit };
     localStorage.setItem(chave, JSON.stringify(salvo));
+  }
+
+  // Busca a liturgia do dia da playlist (lazy). Em offline ligado, atualiza o cache.
+  async function carregarLiturgia(senhaOk: string): Promise<LiturgiaDia | null> {
+    setCarregandoLiturgia(true);
+    try {
+      const res = await api.post<LiturgiaDia>(`/lista-repertorio/${slug}/liturgia`, {
+        senha: senhaOk,
+      });
+      setLiturgia(res.data);
+      if (salvarOffline && playlist) gravarCache(senhaOk, playlist, res.data);
+      return res.data;
+    } catch {
+      setLiturgia(null); // indisponível (origem caiu / sem conexão sem cache)
+      return null;
+    } finally {
+      setCarregandoLiturgia(false);
+    }
   }
 
   // Repertório já salvo neste dispositivo? Abre direto, sem pedir senha,
@@ -65,12 +91,13 @@ export function ListaRepertorio() {
     setPlaylist(cache.playlist);
     setSenha(cache.senha);
     setSalvarOffline(true);
+    if (cache.liturgia) setLiturgia(cache.liturgia);
 
     api
       .post<PlaylistPublica>(`/lista-repertorio/${slug}`, { senha: cache.senha })
       .then((res) => {
         setPlaylist(res.data);
-        gravarCache(cache.senha, res.data);
+        gravarCache(cache.senha, res.data, cache.liturgia); // mantém a liturgia salva
       })
       .catch((error) => {
         // Playlist excluída (404) ou senha não confere mais (401):
@@ -82,10 +109,19 @@ export function ListaRepertorio() {
           setPlaylist(null);
           setSenha('');
           setSalvarOffline(false);
+          setLiturgia(undefined);
         }
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
+
+  // Carrega a liturgia ao abrir a aba pela primeira vez.
+  useEffect(() => {
+    if (aba === 'liturgia' && liturgia === undefined && !carregandoLiturgia && playlist && senha) {
+      carregarLiturgia(senha);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aba, liturgia, playlist]);
 
   async function acessar(e: FormEvent) {
     e.preventDefault();
@@ -95,9 +131,7 @@ export function ListaRepertorio() {
         senha,
       });
       setPlaylist(res.data);
-      if (salvarOffline) {
-        gravarCache(senha, res.data);
-      }
+      if (salvarOffline) gravarCache(senha, res.data, liturgia ?? undefined);
     } catch {
       // erro (401 senha inválida / 404) já em toast pelo interceptor
     } finally {
@@ -105,16 +139,20 @@ export function ListaRepertorio() {
     }
   }
 
-  function alternarOffline() {
+  async function alternarOffline() {
     if (salvarOffline) {
       localStorage.removeItem(chave);
       setSalvarOffline(false);
       toast('Repertório removido deste dispositivo');
-    } else if (playlist) {
-      gravarCache(senha, playlist);
-      setSalvarOffline(true);
-      toast('Repertório salvo para uso offline');
+      return;
     }
+    if (!playlist) return;
+    setSalvarOffline(true);
+    // Garante a liturgia no cache (busca se ainda não tiver sido carregada).
+    let lit = liturgia;
+    if (lit === undefined) lit = await carregarLiturgia(senha);
+    gravarCache(senha, playlist, lit ?? undefined);
+    toast('Repertório salvo para uso offline');
   }
 
   if (!playlist) {
@@ -156,6 +194,11 @@ export function ListaRepertorio() {
   }
 
   const musicas = playlist.musicas ?? [];
+  const abas: { id: Aba; label: string }[] = [
+    { id: 'playlist', label: 'Playlist' },
+    { id: 'liturgia', label: 'Liturgia' },
+    { id: 'oracoes', label: 'Orações' },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -168,143 +211,221 @@ export function ListaRepertorio() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6">
-        {/* Controles globais */}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          {/* Toggle: ocultar/mostrar acordes */}
-          <button
-            type="button"
-            onClick={() => setMostrarAcordes((v) => !v)}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              mostrarAcordes
-                ? 'bg-white text-slate-700 shadow hover:bg-slate-50'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
-            }`}
-          >
-            {mostrarAcordes ? 'Ocultar acordes' : 'Mostrar acordes'}
-          </button>
-
-          {/* Toggle: salvar offline */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600">
-              Salvar offline neste dispositivo
-            </span>
+        {/* Abas */}
+        <div className="mb-5 flex gap-1 rounded-lg bg-slate-200 p-1">
+          {abas.map((t) => (
             <button
+              key={t.id}
               type="button"
-              role="switch"
-              aria-checked={salvarOffline}
-              onClick={alternarOffline}
-              className={`relative h-6 w-11 rounded-full transition-colors ${
-                salvarOffline ? 'bg-emerald-500' : 'bg-slate-300'
+              onClick={() => setAba(t.id)}
+              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                aba === t.id
+                  ? 'bg-white text-slate-800 shadow'
+                  : 'text-slate-600 hover:text-slate-800'
               }`}
             >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
-                  salvarOffline ? 'left-[22px]' : 'left-0.5'
-                }`}
-              />
+              {t.label}
             </button>
-          </div>
+          ))}
         </div>
 
-        {musicas.length === 0 ? (
-          <p className="py-10 text-center text-slate-400">
-            Esta playlist ainda não tem músicas.
-          </p>
-        ) : (
-          <ul className="space-y-3">
-            {musicas.map((m, idx) => {
-              const aberta = abertaId === m.id;
-              // Tom ativo desta música: escolhido pelo usuário (on-the-fly)
-              // ou o SongTom (m.tom) definido pelo dono da playlist.
-              const tomAtivo = tomsAtivos[m.id] ?? m.tom;
-              // Texto transposto para o tom ativo
-              const textoTransposto =
-                tomAtivo === m.song.tom
-                  ? m.song.descricao
-                  : transporCifra(m.song.descricao, tomAtivo, m.song.tom);
-              // Conteúdo final: com ou sem acordes
-              const conteudo = mostrarAcordes
-                ? cifraParaHtml(textoTransposto)
-                : soLetra(textoTransposto);
-              const links = [
-                { url: m.song.cifra, rotulo: 'Cifra original' },
-                { url: m.song.video, rotulo: 'Vídeo' },
-                { url: m.song.slide, rotulo: 'Slide' },
-              ].filter((l) => l.url);
+        {/* ── Aba Playlist ─────────────────────────────────────────────── */}
+        {aba === 'playlist' && (
+          <>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setMostrarAcordes((v) => !v)}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  mostrarAcordes
+                    ? 'bg-white text-slate-700 shadow hover:bg-slate-50'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                }`}
+              >
+                {mostrarAcordes ? 'Ocultar acordes' : 'Mostrar acordes'}
+              </button>
 
-              return (
-                <li key={m.id} className="overflow-hidden rounded-xl bg-white shadow">
-                  <button
-                    onClick={() => setAbertaId(aberta ? null : m.id)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
-                  >
-                    <span className="w-6 text-right text-sm font-bold text-slate-400">
-                      {idx + 1}.
-                    </span>
-                    <span className="font-medium text-slate-800">
-                      {m.song.titulo}
-                    </span>
-                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">
-                      Tom: {tomAtivo}
-                    </span>
-                    <span className="ml-auto text-slate-400">
-                      {aberta ? '▲' : '▼'}
-                    </span>
-                  </button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-600">
+                  Salvar offline neste dispositivo
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={salvarOffline}
+                  onClick={alternarOffline}
+                  className={`relative h-6 w-11 rounded-full transition-colors ${
+                    salvarOffline ? 'bg-emerald-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+                      salvarOffline ? 'left-[22px]' : 'left-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
 
-                  {aberta && (
-                    <div className="border-t border-slate-100 px-4 py-4">
-                      {/* Links externos */}
-                      {links.length > 0 && (
-                        <div className="mb-3 flex flex-wrap gap-2">
-                          {links.map((l) => (
-                            <a
-                              key={l.rotulo}
-                              href={l.url!}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
-                            >
-                              {l.rotulo}
-                            </a>
-                          ))}
+            {musicas.length === 0 ? (
+              <p className="py-10 text-center text-slate-400">
+                Esta playlist ainda não tem músicas.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {musicas.map((m, idx) => {
+                  const aberta = abertaId === m.id;
+                  const tomAtivo = tomsAtivos[m.id] ?? m.tom;
+                  const textoTransposto =
+                    tomAtivo === m.song.tom
+                      ? m.song.descricao
+                      : transporCifra(m.song.descricao, tomAtivo, m.song.tom);
+                  const conteudo = mostrarAcordes
+                    ? cifraParaHtml(textoTransposto)
+                    : soLetra(textoTransposto);
+                  const links = [
+                    { url: m.song.cifra, rotulo: 'Cifra original' },
+                    { url: m.song.video, rotulo: 'Vídeo' },
+                    { url: m.song.slide, rotulo: 'Slide' },
+                  ].filter((l) => l.url);
+
+                  return (
+                    <li key={m.id} className="overflow-hidden rounded-xl bg-white shadow">
+                      <button
+                        onClick={() => setAbertaId(aberta ? null : m.id)}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
+                      >
+                        <span className="w-6 text-right text-sm font-bold text-slate-400">
+                          {idx + 1}.
+                        </span>
+                        <span className="font-medium text-slate-800">
+                          {m.song.titulo}
+                        </span>
+                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">
+                          Tom: {tomAtivo}
+                        </span>
+                        <span className="ml-auto text-slate-400">
+                          {aberta ? '▲' : '▼'}
+                        </span>
+                      </button>
+
+                      {aberta && (
+                        <div className="border-t border-slate-100 px-4 py-4">
+                          {links.length > 0 && (
+                            <div className="mb-3 flex flex-wrap gap-2">
+                              {links.map((l) => (
+                                <a
+                                  key={l.rotulo}
+                                  href={l.url!}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
+                                >
+                                  {l.rotulo}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+
+                          {mostrarAcordes && (
+                            <div className="mb-3 flex flex-wrap gap-1">
+                              {TONS.map((t) => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() =>
+                                    setTomsAtivos((prev) => ({ ...prev, [m.id]: t }))
+                                  }
+                                  className={`min-w-9 rounded-md px-2 py-1 text-xs font-bold transition-colors ${
+                                    tomAtivo === t
+                                      ? 'bg-indigo-600 text-white'
+                                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                  }`}
+                                >
+                                  {t}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          <pre
+                            className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-slate-800"
+                            dangerouslySetInnerHTML={{ __html: conteudo }}
+                          />
                         </div>
                       )}
-
-                      {/* Botões de transposição (só quando acordes visíveis) */}
-                      {mostrarAcordes && (
-                        <div className="mb-3 flex flex-wrap gap-1">
-                          {TONS.map((t) => (
-                            <button
-                              key={t}
-                              type="button"
-                              onClick={() =>
-                                setTomsAtivos((prev) => ({ ...prev, [m.id]: t }))
-                              }
-                              className={`min-w-9 rounded-md px-2 py-1 text-xs font-bold transition-colors ${
-                                tomAtivo === t
-                                  ? 'bg-indigo-600 text-white'
-                                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                              }`}
-                            >
-                              {t}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Cifra ou letra */}
-                      <pre
-                        className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-slate-800"
-                        dangerouslySetInnerHTML={{ __html: conteudo }}
-                      />
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </>
         )}
+
+        {/* ── Aba Liturgia ─────────────────────────────────────────────── */}
+        {aba === 'liturgia' && (
+          <div>
+            {carregandoLiturgia || liturgia === undefined ? (
+              <p className="py-10 text-center text-slate-400">Carregando liturgia…</p>
+            ) : liturgia === null ? (
+              <p className="py-10 text-center text-slate-400">
+                Liturgia indisponível no momento.{' '}
+                <button
+                  type="button"
+                  onClick={() => carregarLiturgia(senha)}
+                  className="font-medium text-indigo-600 underline"
+                >
+                  Tentar de novo
+                </button>
+              </p>
+            ) : (
+              <div className="rounded-xl bg-white p-5 shadow">
+                <div className="mb-4 border-b border-slate-100 pb-3">
+                  <h2 className="text-lg font-bold text-slate-800">{liturgia.titulo}</h2>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                    <span>{formatarData(playlist.data)}</span>
+                    {liturgia.cor && (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                        {liturgia.cor}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  {liturgia.leituras.map((l, i) => (
+                    <div key={i}>
+                      <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
+                        {l.tipo}
+                      </p>
+                      {l.referencia && (
+                        <p className="text-sm font-medium text-slate-600">{l.referencia}</p>
+                      )}
+                      {l.titulo && (
+                        <p className="text-sm italic text-slate-500">{l.titulo}</p>
+                      )}
+                      {l.refrao && (
+                        <p className="mt-1 text-sm font-semibold text-slate-700">
+                          R. {l.refrao}
+                        </p>
+                      )}
+                      <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                        {l.texto}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-5 border-t border-slate-100 pt-3 text-xs text-slate-400">
+                  Fonte: {liturgia.fonte}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Aba Orações ──────────────────────────────────────────────── */}
+        {aba === 'oracoes' && <Oracoes />}
       </main>
     </div>
   );

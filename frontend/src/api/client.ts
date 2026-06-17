@@ -23,8 +23,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // 401 do /auth/me é o fluxo normal de "não logado" — não mostra toast.
+    // /liturgia tem mensagem inline própria na aba — evita toast redundante.
     const url: string = error.config?.url ?? '';
-    const silencioso = url.includes('/auth/me');
+    const silencioso = url.includes('/auth/me') || url.includes('/liturgia');
 
     if (!silencioso) {
       const data = error.response?.data;
