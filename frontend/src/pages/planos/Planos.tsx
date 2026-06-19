@@ -16,6 +16,10 @@ function economiaAnual(mensal: number, anual: number): number {
 
 type MetodoPagamento = 'credit_card' | 'pix';
 
+// Pagamento via cartão de crédito oculto temporariamente.
+// Para reativar futuramente, basta trocar este flag para true.
+const CARTAO_HABILITADO = false;
+
 function formatCpfCnpj(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 14);
   if (digits.length <= 11) {
@@ -38,7 +42,9 @@ export function Planos() {
   const [planos, setPlanos] = useState<Plan[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [assinando, setAssinando] = useState<string | null>(null);
-  const [metodo, setMetodo] = useState<MetodoPagamento>('credit_card');
+  const [metodo, setMetodo] = useState<MetodoPagamento>(
+    CARTAO_HABILITADO ? 'credit_card' : 'pix',
+  );
   const [cpfCnpj, setCpfCnpj] = useState('');
 
   async function assinar(planId: number, billing_cycle: 'monthly' | 'yearly') {
@@ -108,8 +114,8 @@ export function Planos() {
         )}
       </div>
 
-      {/* Toggle método de pagamento */}
-      {!isAdm && (
+      {/* Toggle método de pagamento — exibido só quando há mais de uma opção */}
+      {!isAdm && CARTAO_HABILITADO && (
         <div className="mb-8 flex justify-center">
           <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 gap-1">
             <button
