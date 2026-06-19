@@ -95,6 +95,8 @@ export function Layout() {
 
       {/* Links */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <NavItem to="/" label="Início" />
+
         <NavGroup label="Cadastros" storageKey="nav:cadastros" defaultOpen>
           <NavItem to="/songs" label="Músicas" />
           <NavItem to="/playlists" label="Playlists" />

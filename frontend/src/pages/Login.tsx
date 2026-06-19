@@ -22,8 +22,8 @@ export function Login() {
     try {
       const recaptchaToken = await obterTokenRecaptcha(executeRecaptcha, 'login');
       await login(email, password, recaptchaToken);
-      // Volta para a página que o usuário tentou acessar, ou /songs.
-      navigate(location.state?.from ?? '/songs', { replace: true });
+      // Volta para a página que o usuário tentou acessar, ou a home.
+      navigate(location.state?.from ?? '/', { replace: true });
     } catch (err) {
       // Erros de API já viram toast pelo interceptor; os do reCAPTCHA mostramos aqui.
       if (err instanceof RecaptchaError) toast(err.message, 'error');

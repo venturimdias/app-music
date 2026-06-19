@@ -4,6 +4,7 @@ import { RequireAdm, RequireAuth, RequireNotDemo } from './auth/RequireAuth';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { Home } from './pages/Home';
 import { CadastroBase } from './pages/adm/CadastroBase';
 import { Perfis } from './pages/adm/Perfis';
 import { Usuarios } from './pages/adm/Usuarios';
@@ -26,7 +27,7 @@ import { BillingPix } from './pages/billing/BillingPix';
 function PublicOnly({ children }: { children: React.ReactElement }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return user ? <Navigate to="/songs" replace /> : children;
+  return user ? <Navigate to="/" replace /> : children;
 }
 
 export function App() {
@@ -44,7 +45,7 @@ export function App() {
       {/* Rotas autenticadas */}
       <Route element={<RequireAuth />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/songs" replace />} />
+          <Route path="/" element={<Home />} />
 
           <Route path="/songs" element={<Songs />} />
           <Route path="/songs/:id" element={<SongDetalhe />} />
