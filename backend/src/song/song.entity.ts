@@ -33,6 +33,19 @@ export class Song {
   @Column('text')
   descricao: string; // texto puro com acordes em [..]/{{..}}
 
+  // Colunas desnormalizadas para busca: título e letra já normalizados
+  // (sem acento, minúsculas; a letra também sem acordes). Mantidas em sincronia
+  // pelo service no create/update. Permitem LIKE simples e idêntico em
+  // SQLite (dev) e Postgres (prod). Default '' para a coluna nascer preenchível
+  // ao sincronizar o schema em bases já existentes.
+  // select:false — usadas só no WHERE da busca, nunca retornadas ao cliente
+  // (evita devolver a letra duplicada no payload).
+  @Column({ default: '', select: false })
+  tituloBusca: string;
+
+  @Column('text', { default: '', select: false })
+  letraBusca: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

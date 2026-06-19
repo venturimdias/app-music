@@ -1,85 +1,84 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { AdicionarPlaylist } from '../../components/AdicionarPlaylist';
 import { useToast } from '../../components/Toast';
-import { normalizar } from '../../utils/texto';
 import type { Song } from '../../types';
 
 const selectClass =
   'shrink-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none';
 
+const OPCOES_POR_PAGINA = [10, 20, 40, 80];
+
+type Opcao = { id: number; titulo: string };
+type Filtros = { tempos: Opcao[]; momentos: Opcao[]; artistas: Opcao[] };
+type RespostaSongs = { items: Song[]; total: number; page: number; limit: number };
+
 export function Songs() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [carregando, setCarregando] = useState(true);
   const isAdm = user?.perfil === 'ADM';
 
-  // filtros
+  // dados
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [total, setTotal] = useState(0);
+  const [carregando, setCarregando] = useState(true);
+  const [opcoes, setOpcoes] = useState<Filtros>({ tempos: [], momentos: [], artistas: [] });
+
+  // filtros (texto com debounce; selects imediatos)
   const [busca, setBusca] = useState('');
   const [buscaDescricao, setBuscaDescricao] = useState('');
+  const [buscaDebounce, setBuscaDebounce] = useState('');
+  const [descDebounce, setDescDebounce] = useState('');
   const [filtroTempo, setFiltroTempo] = useState(0);
   const [filtroMomento, setFiltroMomento] = useState(0);
   const [filtroArtista, setFiltroArtista] = useState(0);
 
-  async function carregar() {
+  // paginação
+  const [porPagina, setPorPagina] = useState(10);
+  const [pagina, setPagina] = useState(1);
+
+  // Opções dos filtros: tempos/momentos/artistas em uso (endpoint dedicado,
+  // acessível a qualquer usuário autenticado).
+  useEffect(() => {
+    api
+      .get<Filtros>('/songs/filtros')
+      .then((res) => setOpcoes(res.data))
+      .catch(() => {});
+  }, []);
+
+  // Debounce dos campos de texto. Ao confirmar o termo, volta para a 1ª página.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setBuscaDebounce(busca);
+      setDescDebounce(buscaDescricao);
+      setPagina(1);
+    }, 350);
+    return () => clearTimeout(id);
+  }, [busca, buscaDescricao]);
+
+  const carregar = useCallback(async () => {
     setCarregando(true);
     try {
-      const res = await api.get<Song[]>('/songs');
-      setSongs(res.data);
+      const params: Record<string, string | number> = { page: pagina, limit: porPagina };
+      if (buscaDebounce.trim()) params.titulo = buscaDebounce.trim();
+      if (descDebounce.trim()) params.letra = descDebounce.trim();
+      if (filtroTempo) params.tempoId = filtroTempo;
+      if (filtroMomento) params.momentoId = filtroMomento;
+      if (filtroArtista) params.artistaId = filtroArtista;
+      const res = await api.get<RespostaSongs>('/songs', { params });
+      setSongs(res.data.items);
+      setTotal(res.data.total);
     } finally {
       setCarregando(false);
     }
-  }
+  }, [pagina, porPagina, buscaDebounce, descDebounce, filtroTempo, filtroMomento, filtroArtista]);
 
   useEffect(() => {
     carregar();
-  }, []);
-
-  // Opções dos filtros derivadas das próprias músicas
-  // (GET /tempo|momento|artista é restrito a ADM no backend).
-  const opcoes = useMemo(() => {
-    const tempos = new Map<number, string>();
-    const momentos = new Map<number, string>();
-    const artistas = new Map<number, string>();
-    for (const s of songs) {
-      s.tempos.forEach((t) => tempos.set(t.id, t.titulo));
-      s.momentos.forEach((m) => momentos.set(m.id, m.titulo));
-      s.artistas.forEach((a) => artistas.set(a.id, a.titulo));
-    }
-    const ordenar = (m: Map<number, string>) =>
-      [...m.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-    return {
-      tempos: ordenar(tempos),
-      momentos: ordenar(momentos),
-      artistas: ordenar(artistas),
-    };
-  }, [songs]);
-
-  const filtradas = useMemo(() => {
-    const termo = normalizar(busca.trim());
-    const termoDesc = normalizar(buscaDescricao.trim());
-    return songs.filter((s) => {
-      if (termo && !normalizar(s.titulo).includes(termo)) return false;
-      if (termoDesc) {
-        // remove só acordes inline ([..] e {{..}}) na mesma linha, para casar
-        // a letra mesmo com acordes intercalados. Não cruza quebra de linha,
-        // senão um colchete usado para marcar uma seção inteira apagaria o
-        // refrão junto.
-        const letra = normalizar(
-          s.descricao.replace(/\[[^\]\n]*\]|\{\{[^}\n]*\}\}/g, ''),
-        );
-        if (!letra.includes(termoDesc)) return false;
-      }
-      if (filtroTempo && !s.tempos.some((t) => t.id === filtroTempo)) return false;
-      if (filtroMomento && !s.momentos.some((m) => m.id === filtroMomento)) return false;
-      if (filtroArtista && !s.artistas.some((a) => a.id === filtroArtista)) return false;
-      return true;
-    });
-  }, [songs, busca, buscaDescricao, filtroTempo, filtroMomento, filtroArtista]);
+  }, [carregar]);
 
   const temFiltro = Boolean(
     busca || buscaDescricao || filtroTempo || filtroMomento || filtroArtista,
@@ -91,6 +90,13 @@ export function Songs() {
     setFiltroTempo(0);
     setFiltroMomento(0);
     setFiltroArtista(0);
+    setPagina(1);
+  }
+
+  // Troca de filtro de seleção: aplica e volta para a 1ª página.
+  function aoMudarSelect(setter: (v: number) => void, valor: number) {
+    setter(valor);
+    setPagina(1);
   }
 
   async function excluir(song: Song) {
@@ -98,7 +104,9 @@ export function Songs() {
     try {
       await api.delete(`/songs/${song.id}`);
       toast('Música excluída');
-      await carregar();
+      // Se era o único item da página, recua uma página; senão recarrega.
+      if (songs.length === 1 && pagina > 1) setPagina((p) => p - 1);
+      else await carregar();
     } catch {
       // erro já em toast pelo interceptor
     }
@@ -107,6 +115,10 @@ export function Songs() {
   function juntar(itens: { titulo: string }[]) {
     return itens.length ? itens.map((i) => i.titulo).join(', ') : '—';
   }
+
+  const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
+  const inicio = total === 0 ? 0 : (pagina - 1) * porPagina + 1;
+  const fim = (pagina - 1) * porPagina + songs.length;
 
   return (
     <div>
@@ -138,32 +150,32 @@ export function Songs() {
         />
         <select
           value={filtroTempo}
-          onChange={(e) => setFiltroTempo(Number(e.target.value))}
+          onChange={(e) => aoMudarSelect(setFiltroTempo, Number(e.target.value))}
           className={selectClass}
         >
           <option value={0}>Todos os tempos</option>
-          {opcoes.tempos.map(([id, titulo]) => (
-            <option key={id} value={id}>{titulo}</option>
+          {opcoes.tempos.map((t) => (
+            <option key={t.id} value={t.id}>{t.titulo}</option>
           ))}
         </select>
         <select
           value={filtroMomento}
-          onChange={(e) => setFiltroMomento(Number(e.target.value))}
+          onChange={(e) => aoMudarSelect(setFiltroMomento, Number(e.target.value))}
           className={selectClass}
         >
           <option value={0}>Todos os momentos</option>
-          {opcoes.momentos.map(([id, titulo]) => (
-            <option key={id} value={id}>{titulo}</option>
+          {opcoes.momentos.map((m) => (
+            <option key={m.id} value={m.id}>{m.titulo}</option>
           ))}
         </select>
         <select
           value={filtroArtista}
-          onChange={(e) => setFiltroArtista(Number(e.target.value))}
+          onChange={(e) => aoMudarSelect(setFiltroArtista, Number(e.target.value))}
           className={selectClass}
         >
           <option value={0}>Todos os artistas</option>
-          {opcoes.artistas.map(([id, titulo]) => (
-            <option key={id} value={id}>{titulo}</option>
+          {opcoes.artistas.map((a) => (
+            <option key={a.id} value={a.id}>{a.titulo}</option>
           ))}
         </select>
       </div>
@@ -179,7 +191,8 @@ export function Songs() {
           </button>
         )}
         <span className="ml-auto shrink-0 whitespace-nowrap text-sm text-slate-400">
-          {filtradas.length} de {songs.length} música{songs.length !== 1 && 's'}
+          {total} música{total !== 1 && 's'}
+          {temFiltro && ' encontrada' + (total !== 1 ? 's' : '')}
         </span>
       </div>
 
@@ -201,7 +214,7 @@ export function Songs() {
                   Carregando…
                 </td>
               </tr>
-            ) : filtradas.length === 0 ? (
+            ) : songs.length === 0 ? (
               <tr>
                 <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
                   {temFiltro
@@ -210,7 +223,7 @@ export function Songs() {
                 </td>
               </tr>
             ) : (
-              filtradas.map((song) => (
+              songs.map((song) => (
                 <tr
                   key={song.id}
                   onClick={() => navigate(`/songs/${song.id}`)}
@@ -254,6 +267,47 @@ export function Songs() {
         </table>
       </div>
 
+      {/* Paginação */}
+      {!carregando && total > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-slate-500">
+            Por página
+            <select
+              value={porPagina}
+              onChange={(e) => aoMudarSelect(setPorPagina, Number(e.target.value))}
+              className={selectClass}
+            >
+              {OPCOES_POR_PAGINA.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </label>
+
+          <span className="text-sm text-slate-400">
+            {inicio}–{fim} de {total}
+          </span>
+
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              onClick={() => setPagina((p) => Math.max(1, p - 1))}
+              disabled={pagina <= 1}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <span className="px-2 text-sm text-slate-500">
+              Página {pagina} de {totalPaginas}
+            </span>
+            <button
+              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+              disabled={pagina >= totalPaginas}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+            >
+              Próxima
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,10 +6,11 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SongService } from './song.service';
-import { CreateSongDto, UpdateSongDto } from './song.dto';
+import { CreateSongDto, QuerySongsDto, UpdateSongDto } from './song.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -21,8 +22,15 @@ export class SongController {
   constructor(private readonly service: SongService) {}
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query() query: QuerySongsDto) {
+    return this.service.findAll(query);
+  }
+
+  // Opções para os filtros (tempos/momentos/artistas em uso). Precede a rota
+  // ':id' para não ser capturada por ela.
+  @Get('filtros')
+  findFiltros() {
+    return this.service.findFiltros();
   }
 
   @Get(':id')
