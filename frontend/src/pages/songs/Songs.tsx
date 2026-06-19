@@ -8,7 +8,7 @@ import { normalizar } from '../../utils/texto';
 import type { Song } from '../../types';
 
 const selectClass =
-  'rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none';
+  'shrink-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none';
 
 export function Songs() {
   const { user } = useAuth();
@@ -81,8 +81,9 @@ export function Songs() {
     });
   }, [songs, busca, buscaDescricao, filtroTempo, filtroMomento, filtroArtista]);
 
-  const temFiltro =
-    busca || buscaDescricao || filtroTempo || filtroMomento || filtroArtista;
+  const temFiltro = Boolean(
+    busca || buscaDescricao || filtroTempo || filtroMomento || filtroArtista,
+  );
 
   function limparFiltros() {
     setBusca('');
@@ -122,18 +123,18 @@ export function Songs() {
       </div>
 
       {/* Filtros */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-2 flex flex-nowrap items-center gap-2 overflow-x-auto">
         <input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder="Buscar por título…"
-          className={`${selectClass} w-56`}
+          className={`${selectClass} w-48 shrink-0`}
         />
         <input
           value={buscaDescricao}
           onChange={(e) => setBuscaDescricao(e.target.value)}
           placeholder="Buscar trecho na letra…"
-          className={`${selectClass} w-56`}
+          className={`${selectClass} w-48 shrink-0`}
         />
         <select
           value={filtroTempo}
@@ -165,6 +166,10 @@ export function Songs() {
             <option key={id} value={id}>{titulo}</option>
           ))}
         </select>
+      </div>
+
+      {/* Linha abaixo: limpar filtros + contador */}
+      <div className="mb-4 flex items-center gap-2">
         {temFiltro && (
           <button
             onClick={limparFiltros}
@@ -173,7 +178,7 @@ export function Songs() {
             Limpar filtros
           </button>
         )}
-        <span className="ml-auto text-sm text-slate-400">
+        <span className="ml-auto shrink-0 whitespace-nowrap text-sm text-slate-400">
           {filtradas.length} de {songs.length} música{songs.length !== 1 && 's'}
         </span>
       </div>
@@ -183,10 +188,7 @@ export function Songs() {
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
               <th className="px-4 py-3">Título</th>
-              <th className="px-4 py-3">Tom</th>
-              <th className="px-4 py-3">Tempo(s)</th>
               <th className="px-4 py-3">Momento(s)</th>
-              <th className="px-4 py-3">Artista(s)</th>
               <th className={`${isAdm ? 'w-64' : 'w-32'} px-4 py-3 text-right`}>
                 Ações
               </th>
@@ -195,13 +197,13 @@ export function Songs() {
           <tbody className="divide-y divide-slate-100">
             {carregando ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
                   Carregando…
                 </td>
               </tr>
             ) : filtradas.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
                   {temFiltro
                     ? 'Nenhuma música encontrada com esses filtros.'
                     : 'Nenhuma música cadastrada.'}
@@ -217,14 +219,7 @@ export function Songs() {
                   <td className="px-4 py-3 font-medium text-indigo-700">
                     {song.titulo}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">
-                      {song.tom}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">{juntar(song.tempos)}</td>
                   <td className="px-4 py-3 text-slate-500">{juntar(song.momentos)}</td>
-                  <td className="px-4 py-3 text-slate-500">{juntar(song.artistas)}</td>
                   <td
                     className="px-4 py-3 text-right"
                     onClick={(e) => e.stopPropagation()}
