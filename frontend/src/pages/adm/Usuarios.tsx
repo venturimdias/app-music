@@ -112,13 +112,14 @@ export function Usuarios() {
               <th className="px-4 py-3">Nome</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Perfil</th>
+              <th className="px-4 py-3">Plano</th>
               <th className="w-40 px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {carregando ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
                   Carregando…
                 </td>
               </tr>
@@ -133,6 +134,17 @@ export function Usuarios() {
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                       {tituloPerfil(usuario.perfilId)}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {usuario.plan && !usuario.plan.is_free ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                        ✓ {usuario.plan.name}
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                        {usuario.plan?.name ?? 'Gratuito'}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2 whitespace-nowrap">

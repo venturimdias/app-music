@@ -23,6 +23,8 @@ export interface Usuario {
   nome: string;
   email: string;
   perfilId: number;
+  planId?: number | null;
+  plan?: Plan | null;
   createdAt?: string;
 }
 
