@@ -11,13 +11,16 @@
 ## Diálogo Introdutório
 
 **CP:** O Senhor esteja convosco.
-**AS:** Ele está no meio de nós.
+
+**AS: Ele está no meio de nós.**
 
 **CP:** Corações ao alto.
-**AS:** O nosso coração está em Deus.
+
+**AS: O nosso coração está em Deus.**
 
 **CP:** Demos graças ao Senhor, nosso Deus.
-**AS:** É nosso dever e nossa salvação.
+
+**AS: É nosso dever e nossa salvação.**
 
 ---
 
