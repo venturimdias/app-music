@@ -80,6 +80,7 @@ export function Playlists() {
   // Limite atingido quando o usuário não é ADM e o nº de playlists ativas
   // iguala ou supera o max_playlists do plano.
   const isAdm = user?.perfil === 'ADM';
+  const isDemo = user?.perfil === 'DEMO';
   const ativas = playlists.filter((p) => !p.bloqueada).length;
   const limite = user?.plan?.max_playlists ?? 1;
   const limiteAtingido = !isAdm && ativas >= limite;
@@ -89,12 +90,14 @@ export function Playlists() {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800">Minhas playlists</h1>
         {limiteAtingido ? (
-          <button
-            onClick={() => navigate('/planos')}
-            className="rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600"
-          >
-            Fazer upgrade
-          </button>
+          isDemo ? null : (
+            <button
+              onClick={() => navigate('/planos')}
+              className="rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600"
+            >
+              Fazer upgrade
+            </button>
+          )
         ) : (
           <button
             onClick={abrirNova}
@@ -108,16 +111,25 @@ export function Playlists() {
       {/* Banner informativo quando limite atingido */}
       {limiteAtingido && (
         <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <span>
-            Você atingiu o limite de <strong>{limite} playlist(s)</strong> do plano{' '}
-            <strong>{user?.plan?.name ?? 'FREE'}</strong>.
-          </span>
-          <button
-            onClick={() => navigate('/planos')}
-            className="ml-auto whitespace-nowrap rounded-md bg-amber-500 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-600"
-          >
-            Ver planos
-          </button>
+          {isDemo ? (
+            <span>
+              Você atingiu o limite de <strong>{limite} playlist(s)</strong> e está no
+              perfil de <strong>DEMONSTRAÇÃO</strong>.
+            </span>
+          ) : (
+            <>
+              <span>
+                Você atingiu o limite de <strong>{limite} playlist(s)</strong> do plano{' '}
+                <strong>{user?.plan?.name ?? 'FREE'}</strong>.
+              </span>
+              <button
+                onClick={() => navigate('/planos')}
+                className="ml-auto whitespace-nowrap rounded-md bg-amber-500 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-600"
+              >
+                Ver planos
+              </button>
+            </>
+          )}
         </div>
       )}
 
