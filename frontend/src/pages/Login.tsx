@@ -39,7 +39,7 @@ export function Login() {
         className="w-full max-w-sm rounded-xl bg-white p-8 shadow-md"
       >
         <h1 className="mb-1 text-center text-2xl font-bold text-slate-800">
-          ♪ App Música
+          ♪ LouvorApp
         </h1>
         <p className="mb-6 text-center text-sm text-slate-500">
           Cifras litúrgicas e playlists

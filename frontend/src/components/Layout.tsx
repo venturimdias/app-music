@@ -90,7 +90,7 @@ export function Layout() {
       {/* Logo */}
       <div className="flex items-center gap-2 border-b border-slate-700/60 px-5 py-5">
         <span className="text-2xl leading-none">♪</span>
-        <span className="text-base font-bold tracking-tight text-white">App Música</span>
+        <span className="text-base font-bold tracking-tight text-white">LouvorApp</span>
       </div>
 
       {/* Links */}
@@ -181,7 +181,7 @@ export function Layout() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="text-sm font-bold text-slate-800">♪ App Música</span>
+          <span className="text-sm font-bold text-slate-800">♪ LouvorApp</span>
         </header>
 
         <main className="flex-1 px-4 py-6 md:px-8">
