@@ -71,7 +71,7 @@ export function Register() {
             Criar sua conta
           </h1>
           <p className="mt-2 text-sm text-neutral-500">
-            Monte seu grupo de louvor e organize a primeira celebração em minutos.
+            Monte seu grupo de canto e organize a primeira celebração em minutos.
           </p>
         </div>
 

@@ -48,7 +48,7 @@ export function Login() {
               Entrar no grupo
             </h1>
             <p className="mt-2 text-sm text-neutral-500">
-              Acesse o repertório e as celebrações do seu grupo de louvor.
+              Acesse o repertório e as celebrações do seu grupo de canto.
             </p>
           </div>
 

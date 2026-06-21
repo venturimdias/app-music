@@ -26,7 +26,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
           </h2>
           <p className="mt-4 text-base leading-relaxed text-white/80">
             Cifras, letras e repertório em um só lugar. Organize celebrações e compartilhe
-            com todo o grupo de louvor.
+            com todo o grupo de canto.
           </p>
         </div>
         <div className="font-display text-xs font-bold uppercase tracking-[0.16em] text-teal-300">
