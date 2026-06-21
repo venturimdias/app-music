@@ -18,8 +18,8 @@ export function Oracoes() {
             onClick={() => setAtivaId(o.id)}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
               o.id === ativa?.id
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-slate-700 shadow hover:bg-slate-50'
+                ? 'bg-teal-600 text-white'
+                : 'bg-white text-neutral-700 shadow hover:bg-neutral-50'
             }`}
           >
             {o.titulo}
@@ -31,7 +31,7 @@ export function Oracoes() {
         {ativa ? (
           <ReactMarkdown>{ativa.conteudo}</ReactMarkdown>
         ) : (
-          <p className="text-sm text-slate-400">Nenhuma oração cadastrada.</p>
+          <p className="text-sm text-neutral-400">Nenhuma oração cadastrada.</p>
         )}
       </div>
     </div>

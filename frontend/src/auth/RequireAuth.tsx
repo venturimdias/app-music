@@ -8,7 +8,7 @@ export function RequireAuth() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-slate-500">
+      <div className="flex h-screen items-center justify-center text-neutral-500">
         Carregando…
       </div>
     );

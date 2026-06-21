@@ -91,10 +91,10 @@ export function CadastroBase({ recurso, tituloPagina, nomeItem }: CadastroBasePr
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">{tituloPagina}</h1>
+        <h1 className="text-2xl font-display font-bold text-marinho">{tituloPagina}</h1>
         <button
           onClick={abrirNovo}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
         >
           Novo {nomeItem}
         </button>
@@ -102,46 +102,46 @@ export function CadastroBase({ recurso, tituloPagina, nomeItem }: CadastroBasePr
 
       <div className="overflow-hidden rounded-xl bg-white shadow">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
             <tr>
               <th className="px-4 py-3">Título</th>
               <th className="px-4 py-3">Descrição</th>
               <th className="w-40 px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-neutral-100">
             {carregando ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-8 text-center text-neutral-400">
                   Carregando…
                 </td>
               </tr>
             ) : itens.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-8 text-center text-neutral-400">
                   Nenhum registro cadastrado.
                 </td>
               </tr>
             ) : (
               itens.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-800">
+                <tr key={item.id} className="hover:bg-neutral-50">
+                  <td className="px-4 py-3 font-medium text-neutral-800">
                     {item.titulo}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-4 py-3 text-neutral-500">
                     {item.descricao ?? '—'}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                       <button
                         onClick={() => abrirEdicao(item)}
-                        className="rounded-md px-3 py-1 text-indigo-600 hover:bg-indigo-50"
+                        className="rounded-md px-3 py-1 text-teal-600 hover:bg-teal-100"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => excluir(item)}
-                        className="rounded-md px-3 py-1 text-red-600 hover:bg-red-50"
+                        className="rounded-md px-3 py-1 text-danger-600 hover:bg-danger-50"
                       >
                         Excluir
                       </button>
@@ -160,37 +160,37 @@ export function CadastroBase({ recurso, tituloPagina, nomeItem }: CadastroBasePr
         onClose={() => setModalAberto(false)}
       >
         <form onSubmit={salvar}>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Título *
           </label>
           <input
             required
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
-            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Descrição
           </label>
           <input
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
-            className="mb-6 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-6 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
           <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setModalAberto(false)}
-              className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={salvando}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
             >
               {salvando ? 'Salvando…' : 'Salvar'}
             </button>

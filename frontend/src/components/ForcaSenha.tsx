@@ -13,14 +13,14 @@ export function ForcaSenha({ senha }: { senha: string }) {
             <div
               key={i}
               className={`h-1 flex-1 rounded-full transition-colors ${
-                i < forca ? barraColor[forca] : 'bg-slate-200'
+                i < forca ? barraColor[forca] : 'bg-neutral-200'
               }`}
             />
           ))}
         </div>
         <p
           className={`mt-1 text-xs font-medium ${
-            forca >= 4 ? 'text-emerald-600' : 'text-amber-600'
+            forca >= 4 ? 'text-success-600' : 'text-warning-600'
           }`}
         >
           {barraLabel[forca]}
@@ -34,7 +34,7 @@ export function ForcaSenha({ senha }: { senha: string }) {
             <li
               key={r.label}
               className={`flex items-center gap-1.5 text-xs ${
-                ok ? 'text-emerald-600' : 'text-slate-400'
+                ok ? 'text-success-600' : 'text-neutral-400'
               }`}
             >
               <span className="text-base leading-none">{ok ? '✓' : '○'}</span>

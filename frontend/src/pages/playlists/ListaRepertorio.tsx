@@ -7,6 +7,8 @@ import { cifraParaHtml, soLetra, transporCifra } from '../../utils/cifra';
 import { TONS } from '../../types';
 import type { LiturgiaDia, PlaylistMusica, PlaylistPublica } from '../../types';
 import { formatarData } from './Playlists';
+import logoColorido from '../../assets/louvorapp-horizontal.png';
+import simboloBranco from '../../assets/louvorapp-simbolo-branco.png';
 
 type Aba = 'playlist' | 'liturgia' | 'oracoes';
 
@@ -182,19 +184,17 @@ export function ListaRepertorio() {
 
   if (!playlist) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-papel p-4">
         <form
           onSubmit={acessar}
-          className="w-full max-w-sm rounded-xl bg-white p-8 shadow-md"
+          className="w-full max-w-sm rounded-2xl border border-nevoa bg-white p-8 shadow-lg"
         >
-          <h1 className="mb-1 text-center text-2xl font-bold text-slate-800">
-            ♪ Repertório
-          </h1>
-          <p className="mb-6 text-center text-sm text-slate-500">
+          <img src={logoColorido} alt="LouvorApp" className="mx-auto mb-2 h-9 w-auto" />
+          <p className="mb-6 text-center text-sm text-neutral-500">
             Digite a senha que você recebeu para ver a lista de músicas.
           </p>
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block font-display text-sm font-medium text-marinho">
             Senha
           </label>
           <input
@@ -202,14 +202,14 @@ export function ListaRepertorio() {
             maxLength={5}
             value={senha}
             onChange={(e) => setSenha(e.target.value.toUpperCase())}
-            className="mb-6 w-full rounded-md border border-slate-300 px-3 py-2 text-center font-mono text-lg tracking-widest focus:border-indigo-500 focus:outline-none"
+            className="mb-6 w-full rounded-md border border-nevoa px-3 py-2 text-center font-mono text-lg tracking-widest transition-colors focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-400/40"
             placeholder="•••••"
           />
 
           <button
             type="submit"
             disabled={enviando}
-            className="w-full rounded-md bg-indigo-600 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full rounded-md bg-teal-600 py-2 font-display text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:opacity-50"
           >
             {enviando ? 'Verificando…' : 'Acessar repertório'}
           </button>
@@ -252,10 +252,17 @@ export function ListaRepertorio() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <header className="bg-slate-900 px-4 py-4 text-center">
-        <h1 className="text-xl font-bold text-white">♪ {playlist.nome}</h1>
-        <p className="mt-1 text-sm text-slate-400">
+    <div className="min-h-screen bg-papel">
+      <header className="relative overflow-hidden bg-gradient-celebracao px-4 py-8 text-center">
+        <img
+          src={simboloBranco}
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute -right-6 -top-6 w-32 opacity-10"
+        />
+        <img src={simboloBranco} alt="" aria-hidden className="mx-auto mb-2 h-8 w-auto opacity-90" />
+        <h1 className="text-xl font-display font-bold text-white">{playlist.nome}</h1>
+        <p className="mt-1 text-sm text-white/70">
           {formatarData(playlist.data)}
           {playlist.descricao && <> · {playlist.descricao}</>}
         </p>
@@ -263,16 +270,16 @@ export function ListaRepertorio() {
 
       <main className="mx-auto max-w-3xl px-4 py-6">
         {/* Abas */}
-        <div className="mb-5 flex gap-1 rounded-lg bg-slate-200 p-1">
+        <div className="mb-5 flex gap-1 rounded-lg bg-neutral-200 p-1">
           {abas.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setAba(t.id)}
-              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex-1 rounded-md px-3 py-2 font-display text-sm transition-colors ${
                 aba === t.id
-                  ? 'bg-white text-slate-800 shadow'
-                  : 'text-slate-600 hover:text-slate-800'
+                  ? 'bg-white font-semibold text-marinho shadow'
+                  : 'font-medium text-neutral-600 hover:text-marinho'
               }`}
             >
               {t.label}
@@ -289,15 +296,15 @@ export function ListaRepertorio() {
                 onClick={() => setMostrarAcordes((v) => !v)}
                 className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   mostrarAcordes
-                    ? 'bg-white text-slate-700 shadow hover:bg-slate-50'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    ? 'bg-white text-neutral-700 shadow hover:bg-neutral-50'
+                    : 'bg-teal-600 text-white hover:bg-teal-700'
                 }`}
               >
                 {mostrarAcordes ? 'Ocultar acordes' : 'Mostrar acordes'}
               </button>
 
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-600">
+                <span className="text-sm text-neutral-600">
                   Salvar offline neste dispositivo
                 </span>
                 <button
@@ -306,7 +313,7 @@ export function ListaRepertorio() {
                   aria-checked={salvarOffline}
                   onClick={alternarOffline}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
-                    salvarOffline ? 'bg-emerald-500' : 'bg-slate-300'
+                    salvarOffline ? 'bg-success-600' : 'bg-neutral-300'
                   }`}
                 >
                   <span
@@ -319,7 +326,7 @@ export function ListaRepertorio() {
             </div>
 
             {itens.length === 0 ? (
-              <p className="py-10 text-center text-slate-400">
+              <p className="py-10 text-center text-neutral-400">
                 Esta playlist ainda não tem itens.
               </p>
             ) : (
@@ -333,25 +340,25 @@ export function ListaRepertorio() {
                       <li key={item.key} className="overflow-hidden rounded-xl bg-white shadow">
                         <button
                           onClick={() => alternar(item.key)}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50"
                         >
-                          <span className="w-6 text-right text-sm font-bold text-slate-400">
+                          <span className="w-6 text-right text-sm font-bold text-neutral-400">
                             {idx + 1}.
                           </span>
-                          <span className="font-medium text-slate-800">
+                          <span className="font-medium text-neutral-800">
                             {item.tipo === 'salmo' ? 'Salmo responsorial' : 'Antífona do Evangelho'}
                           </span>
-                          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-700">
+                          <span className="rounded-full bg-warning-50 px-2 py-0.5 text-xs font-bold text-warning-700">
                             Liturgia
                           </span>
-                          <span className="ml-auto text-slate-400">
+                          <span className="ml-auto text-neutral-400">
                             {aberta ? '▲' : '▼'}
                           </span>
                         </button>
 
                         {aberta && (
-                          <div className="border-t border-slate-100 px-4 py-4">
-                            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                          <div className="border-t border-neutral-100 px-4 py-4">
+                            <p className="whitespace-pre-wrap text-sm leading-7 text-neutral-700">
                               {item.texto}
                             </p>
                           </div>
@@ -383,29 +390,29 @@ export function ListaRepertorio() {
                     <li key={item.key} className="overflow-hidden rounded-xl bg-white shadow">
                       <button
                         onClick={() => alternar(item.key)}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50"
                       >
-                        <span className="w-6 text-right text-sm font-bold text-slate-400">
+                        <span className="w-6 text-right text-sm font-bold text-neutral-400">
                           {idx + 1}.
                         </span>
                         <span className="flex min-w-0 flex-col">
-                          <span className="font-medium text-slate-800">
+                          <span className="font-medium text-neutral-800">
                             {m.song.titulo}
                           </span>
                           {momentoStr && (
-                            <span className="text-xs text-slate-400">{momentoStr}</span>
+                            <span className="text-xs text-neutral-400">{momentoStr}</span>
                           )}
                         </span>
-                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700">
+                        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">
                           Tom: {tomAtivo}
                         </span>
-                        <span className="ml-auto text-slate-400">
+                        <span className="ml-auto text-neutral-400">
                           {aberta ? '▲' : '▼'}
                         </span>
                       </button>
 
                       {aberta && (
-                        <div className="border-t border-slate-100 px-4 py-4">
+                        <div className="border-t border-neutral-100 px-4 py-4">
                           {links.length > 0 && (
                             <div className="mb-3 flex flex-wrap gap-2">
                               {links.map((l) => (
@@ -414,7 +421,7 @@ export function ListaRepertorio() {
                                   href={l.url!}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-300"
+                                  className="rounded-md bg-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-300"
                                 >
                                   {l.rotulo}
                                 </a>
@@ -433,8 +440,8 @@ export function ListaRepertorio() {
                                   }
                                   className={`min-w-9 rounded-md px-2 py-1 text-xs font-bold transition-colors ${
                                     tomAtivo === t
-                                      ? 'bg-indigo-600 text-white'
-                                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                      ? 'bg-teal-600 text-white'
+                                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                                   }`}
                                 >
                                   {t}
@@ -444,7 +451,7 @@ export function ListaRepertorio() {
                           )}
 
                           <pre
-                            className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-slate-800"
+                            className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
                             dangerouslySetInnerHTML={{ __html: conteudo }}
                           />
                         </div>
@@ -461,26 +468,26 @@ export function ListaRepertorio() {
         {aba === 'liturgia' && (
           <div>
             {carregandoLiturgia || liturgia === undefined ? (
-              <p className="py-10 text-center text-slate-400">Carregando liturgia…</p>
+              <p className="py-10 text-center text-neutral-400">Carregando liturgia…</p>
             ) : liturgia === null ? (
-              <p className="py-10 text-center text-slate-400">
+              <p className="py-10 text-center text-neutral-400">
                 Liturgia indisponível no momento.{' '}
                 <button
                   type="button"
                   onClick={() => carregarLiturgia(senha)}
-                  className="font-medium text-indigo-600 underline"
+                  className="font-medium text-teal-600 underline"
                 >
                   Tentar de novo
                 </button>
               </p>
             ) : (
               <div className="rounded-xl bg-white p-5 shadow">
-                <div className="mb-4 border-b border-slate-100 pb-3">
-                  <h2 className="text-lg font-bold text-slate-800">{liturgia.titulo}</h2>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                <div className="mb-4 border-b border-neutral-100 pb-3">
+                  <h2 className="text-lg font-display font-bold text-marinho">{liturgia.titulo}</h2>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
                     <span>{formatarData(playlist.data)}</span>
                     {liturgia.cor && (
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                      <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
                         {liturgia.cor}
                       </span>
                     )}
@@ -490,28 +497,28 @@ export function ListaRepertorio() {
                 <div className="space-y-5">
                   {liturgia.leituras.map((l, i) => (
                     <div key={i}>
-                      <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
+                      <p className="text-xs font-bold uppercase tracking-wide text-teal-700">
                         {l.tipo}
                       </p>
                       {l.referencia && (
-                        <p className="text-sm font-medium text-slate-600">{l.referencia}</p>
+                        <p className="text-sm font-medium text-neutral-600">{l.referencia}</p>
                       )}
                       {l.titulo && (
-                        <p className="text-sm italic text-slate-500">{l.titulo}</p>
+                        <p className="text-sm italic text-neutral-500">{l.titulo}</p>
                       )}
                       {l.refrao && (
-                        <p className="mt-1 text-sm font-semibold text-slate-700">
+                        <p className="mt-1 text-sm font-semibold text-neutral-700">
                           R. {l.refrao}
                         </p>
                       )}
-                      <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                      <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-neutral-700">
                         {l.texto}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                <p className="mt-5 border-t border-slate-100 pt-3 text-xs text-slate-400">
+                <p className="mt-5 border-t border-neutral-100 pt-3 text-xs text-neutral-400">
                   Fonte: {liturgia.fonte}
                 </p>
               </div>

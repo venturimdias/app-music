@@ -52,9 +52,9 @@ export function ComboboxMulti({
 
   return (
     <div className="mb-4">
-      <label className="mb-1 block text-sm font-medium text-slate-700">
+      <label className="mb-1 block text-sm font-medium text-neutral-700">
         {label}
-        {max && <span className="text-slate-400"> (máx. {max})</span>}
+        {max && <span className="text-neutral-400"> (máx. {max})</span>}
       </label>
 
       {escolhidos.length > 0 && (
@@ -62,13 +62,13 @@ export function ComboboxMulti({
           {escolhidos.map((item) => (
             <span
               key={item.id}
-              className="flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1 text-sm font-medium text-white"
+              className="flex items-center gap-1 rounded-full bg-teal-600 px-3 py-1 text-sm font-medium text-white"
             >
               {item.titulo}
               <button
                 type="button"
                 onClick={() => onToggle(item.id)}
-                className="rounded-full px-1 leading-none hover:bg-indigo-500"
+                className="rounded-full px-1 leading-none hover:bg-teal-500"
                 aria-label={`Remover ${item.titulo}`}
               >
                 ×
@@ -93,11 +93,11 @@ export function ComboboxMulti({
               ? `Limite de ${max} atingido — remova um para trocar`
               : `Digite para buscar ${nomeItem}…`
           }
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"
+          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none disabled:bg-neutral-100 disabled:text-neutral-400"
         />
 
         {aberto && !atingiuMax && (
-          <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
+          <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-neutral-200 bg-white shadow-lg">
             {sugestoes.map((item) => (
               <button
                 key={item.id}
@@ -105,13 +105,13 @@ export function ComboboxMulti({
                 // preventDefault no mousedown evita o blur do input antes do clique
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => escolher(item.id)}
-                className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-indigo-50"
+                className="block w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-teal-100"
               >
                 {item.titulo}
               </button>
             ))}
             {sugestoes.length === 0 && !busca.trim() && (
-              <p className="px-3 py-2 text-sm text-slate-400">
+              <p className="px-3 py-2 text-sm text-neutral-400">
                 Nenhum {nomeItem} disponível.
               </p>
             )}
@@ -120,7 +120,7 @@ export function ComboboxMulti({
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={criar}
-                className="block w-full border-t border-slate-100 px-3 py-2 text-left text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+                className="block w-full border-t border-neutral-100 px-3 py-2 text-left text-sm font-medium text-teal-600 hover:bg-teal-100"
               >
                 + Criar {nomeItem} "{busca.trim()}"
               </button>

@@ -5,10 +5,21 @@ import { useAuth } from '../../auth/AuthContext';
 import { Modal } from '../../components/Modal';
 import { useToast } from '../../components/Toast';
 import type { Playlist } from '../../types';
+import simboloBranco from '../../assets/louvorapp-simbolo-branco.png';
 
 export function formatarData(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
+
+// Gradientes de capa (paleta da marca) — escolhidos ciclicamente por índice.
+const CAPAS = [
+  'linear-gradient(160deg,#202040,#2E6E78)',
+  'linear-gradient(160deg,#161842,#3f8893)',
+  'linear-gradient(160deg,#243a52,#5FA3AD)',
+  'linear-gradient(160deg,#202040,#C9A961)',
+  'linear-gradient(160deg,#161842,#235760)',
+  'linear-gradient(160deg,#2c2c54,#3f8893)',
+];
 
 export function Playlists() {
   const { toast } = useToast();
@@ -88,12 +99,12 @@ export function Playlists() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Minhas playlists</h1>
+        <h1 className="text-2xl font-display font-bold text-marinho">Minhas playlists</h1>
         {limiteAtingido ? (
           isDemo ? null : (
             <button
               onClick={() => navigate('/planos')}
-              className="rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600"
+              className="rounded-md bg-dourado-500 px-4 py-2 text-sm font-semibold text-marinho-profundo transition-colors hover:bg-dourado-600"
             >
               Fazer upgrade
             </button>
@@ -101,7 +112,7 @@ export function Playlists() {
         ) : (
           <button
             onClick={abrirNova}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
           >
             Nova playlist
           </button>
@@ -110,7 +121,7 @@ export function Playlists() {
 
       {/* Banner informativo quando limite atingido */}
       {limiteAtingido && (
-        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
           {isDemo ? (
             <span>
               Você atingiu o limite de <strong>{limite} playlist(s)</strong> e está no
@@ -124,7 +135,7 @@ export function Playlists() {
               </span>
               <button
                 onClick={() => navigate('/planos')}
-                className="ml-auto whitespace-nowrap rounded-md bg-amber-500 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-600"
+                className="ml-auto whitespace-nowrap rounded-md bg-warning-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-warning-700"
               >
                 Ver planos
               </button>
@@ -134,58 +145,72 @@ export function Playlists() {
       )}
 
       {carregando ? (
-        <p className="py-10 text-center text-slate-400">Carregando…</p>
+        <p className="py-10 text-center text-neutral-400">Carregando…</p>
       ) : playlists.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
+        <div className="rounded-xl border-2 border-dashed border-neutral-300 bg-white p-10 text-center text-neutral-500">
           Você ainda não tem playlists. Crie a primeira!
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {playlists.map((playlist) => (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {playlists.map((playlist, idx) => (
             <div
               key={playlist.id}
               onClick={() => !playlist.bloqueada && navigate(`/playlists/${playlist.id}`)}
-              className={`relative rounded-xl bg-white p-5 shadow transition-shadow ${
+              className={`group relative overflow-hidden rounded-2xl border border-nevoa bg-white shadow-sm transition-all ${
                 playlist.bloqueada
                   ? 'cursor-not-allowed opacity-60'
-                  : 'cursor-pointer hover:shadow-md'
+                  : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md'
               }`}
             >
-              {/* Badge de bloqueada */}
-              {playlist.bloqueada && (
-                <span className="absolute right-3 top-3 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">
-                  Bloqueada
+              {/* Capa em gradiente de marca */}
+              <div
+                className="relative flex h-28 items-end p-4"
+                style={{ background: CAPAS[idx % CAPAS.length] }}
+              >
+                <img
+                  src={simboloBranco}
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute -right-3 -top-3 w-24 opacity-10"
+                />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-black/25 px-3 py-1 font-display text-xs font-semibold text-white backdrop-blur-sm">
+                  {formatarData(playlist.data)}
                 </span>
-              )}
+                {playlist.bloqueada && (
+                  <span className="absolute right-3 top-3 rounded-full bg-black/30 px-2 py-0.5 text-xs font-semibold text-white backdrop-blur-sm">
+                    Bloqueada
+                  </span>
+                )}
+              </div>
 
-              <div className="flex items-start justify-between">
-                <h2 className="font-semibold text-slate-800">{playlist.nome}</h2>
-                {!playlist.bloqueada && (
+              {/* Corpo */}
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="font-display font-semibold text-marinho">{playlist.nome}</h2>
+                  {!playlist.bloqueada && (
+                    <button
+                      onClick={(e) => excluir(playlist, e)}
+                      className="-mr-1 -mt-1 rounded-md px-2 py-0.5 text-sm text-neutral-400 hover:bg-danger-50 hover:text-danger-600"
+                      aria-label="Excluir playlist"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                {playlist.descricao && (
+                  <p className="mt-1 text-sm text-neutral-500">{playlist.descricao}</p>
+                )}
+
+                {/* CTA de upgrade nas playlists bloqueadas */}
+                {playlist.bloqueada && (
                   <button
-                    onClick={(e) => excluir(playlist, e)}
-                    className="rounded-md px-2 py-0.5 text-sm text-red-500 hover:bg-red-50"
-                    aria-label="Excluir playlist"
+                    onClick={(e) => { e.stopPropagation(); navigate('/planos'); }}
+                    className="mt-3 w-full rounded-md bg-dourado-500 py-1.5 text-xs font-semibold text-marinho-profundo transition-colors hover:bg-dourado-600"
                   >
-                    ✕
+                    Fazer upgrade para desbloquear
                   </button>
                 )}
               </div>
-              <p className="mt-1 text-sm font-medium text-indigo-600">
-                {formatarData(playlist.data)}
-              </p>
-              {playlist.descricao && (
-                <p className="mt-1 text-sm text-slate-500">{playlist.descricao}</p>
-              )}
-
-              {/* CTA de upgrade nas playlists bloqueadas */}
-              {playlist.bloqueada && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); navigate('/planos'); }}
-                  className="mt-3 w-full rounded-md bg-amber-500 py-1.5 text-xs font-semibold text-white hover:bg-amber-600"
-                >
-                  Fazer upgrade para desbloquear
-                </button>
-              )}
             </div>
           ))}
         </div>
@@ -193,17 +218,17 @@ export function Playlists() {
 
       <Modal title="Nova playlist" open={modalAberto} onClose={() => setModalAberto(false)}>
         <form onSubmit={criar}>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Nome *
           </label>
           <input
             required
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Data *
           </label>
           <input
@@ -211,52 +236,52 @@ export function Playlists() {
             required
             value={data}
             onChange={(e) => setData(e.target.value)}
-            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Descrição
           </label>
           <input
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
-            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Salmo responsorial <span className="font-normal text-slate-400">(opcional)</span>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            Salmo responsorial <span className="font-normal text-neutral-400">(opcional)</span>
           </label>
           <textarea
             value={salmo}
             onChange={(e) => setSalmo(e.target.value)}
             rows={3}
             placeholder="R. Refrão&#10;Versículos do salmo…"
-            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Antífona do Evangelho <span className="font-normal text-slate-400">(opcional)</span>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
+            Antífona do Evangelho <span className="font-normal text-neutral-400">(opcional)</span>
           </label>
           <textarea
             value={antifonaEvangelho}
             onChange={(e) => setAntifonaEvangelho(e.target.value)}
             rows={2}
             placeholder="Aleluia, aleluia…"
-            className="mb-6 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-6 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
           <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setModalAberto(false)}
-              className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={salvando}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
             >
               {salvando ? 'Criando…' : 'Criar'}
             </button>

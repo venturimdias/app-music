@@ -6,16 +6,16 @@ import { useToast } from '../../components/Toast';
 import type { Payment, PixPendente, Subscription } from '../../types';
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  active:   { label: 'Ativa',        color: 'bg-emerald-100 text-emerald-700' },
-  pending:  { label: 'Pendente',     color: 'bg-yellow-100 text-yellow-700' },
-  past_due: { label: 'Inadimplente', color: 'bg-red-100 text-red-700' },
-  canceled: { label: 'Cancelada',    color: 'bg-slate-100 text-slate-500' },
+  active:   { label: 'Ativa',        color: 'bg-success-100 text-success-700' },
+  pending:  { label: 'Pendente',     color: 'bg-warning-100 text-warning-700' },
+  past_due: { label: 'Inadimplente', color: 'bg-danger-100 text-danger-700' },
+  canceled: { label: 'Cancelada',    color: 'bg-neutral-100 text-neutral-500' },
 };
 
 const paymentStatusLabel: Record<string, { label: string; color: string }> = {
-  paid:     { label: 'Pago',         color: 'text-emerald-600' },
-  failed:   { label: 'Falhou',       color: 'text-red-600' },
-  refunded: { label: 'Reembolsado',  color: 'text-slate-500' },
+  paid:     { label: 'Pago',         color: 'text-success-600' },
+  failed:   { label: 'Falhou',       color: 'text-danger-600' },
+  refunded: { label: 'Reembolsado',  color: 'text-neutral-500' },
 };
 
 function fmt(v: number) {
@@ -79,11 +79,11 @@ function PixPendenteCard({ asaasSubId, onPago }: { asaasSubId: string; onPago: (
   if (pix === null) return null;
 
   return (
-    <div className="rounded-xl bg-white p-6 shadow-sm border border-emerald-200">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+    <div className="rounded-xl bg-white p-6 shadow-sm border border-success-200">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-500">
         PIX do mês atual
       </h2>
-      <p className="mb-4 text-sm text-slate-600">
+      <p className="mb-4 text-sm text-neutral-600">
         Valor: <strong>{fmt(pix.value)}</strong>
         {pix.expiresAt && (
           <> — válido até {new Date(pix.expiresAt).toLocaleString('pt-BR')}</>
@@ -93,29 +93,29 @@ function PixPendenteCard({ asaasSubId, onPago }: { asaasSubId: string; onPago: (
         <img
           src={pix.pixQrCode}
           alt="QR Code PIX"
-          className="h-44 w-44 rounded-xl border border-slate-200"
+          className="h-44 w-44 rounded-xl border border-neutral-200"
         />
       </div>
       <div className="mt-4">
-        <p className="mb-1 text-xs font-medium text-slate-500">Copia e cola</p>
-        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="flex-1 truncate font-mono text-xs text-slate-700">
+        <p className="mb-1 text-xs font-medium text-neutral-500">Copia e cola</p>
+        <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+          <p className="flex-1 truncate font-mono text-xs text-neutral-700">
             {pix.pixCopiaECola}
           </p>
           <button
             onClick={copiar}
-            className="shrink-0 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+            className="shrink-0 rounded-md bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700"
           >
             {copiado ? 'Copiado!' : 'Copiar'}
           </button>
         </div>
       </div>
-      <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-3">
-        <svg className="h-4 w-4 animate-spin text-amber-500" fill="none" viewBox="0 0 24 24">
+      <div className="mt-4 flex items-center gap-2 rounded-lg bg-warning-50 px-4 py-3">
+        <svg className="h-4 w-4 animate-spin text-warning-600" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <span className="text-sm text-amber-700">Aguardando confirmação do pagamento…</span>
+        <span className="text-sm text-warning-700">Aguardando confirmação do pagamento…</span>
       </div>
     </div>
   );
@@ -162,7 +162,7 @@ export function MinhaAssinatura() {
   const isAdm = user?.perfil === 'ADM';
 
   if (assinatura === undefined) {
-    return <div className="py-20 text-center text-slate-400">Carregando…</div>;
+    return <div className="py-20 text-center text-neutral-400">Carregando…</div>;
   }
 
   const mostrarPixPendente =
@@ -172,20 +172,20 @@ export function MinhaAssinatura() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">Minha assinatura</h1>
+      <h1 className="text-2xl font-display font-bold text-marinho">Minha assinatura</h1>
 
       {/* Plano atual */}
       <div className="rounded-xl bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-500">
           Plano atual
         </h2>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xl font-bold text-slate-800">
+            <p className="text-xl font-display font-bold text-marinho">
               {isAdm ? 'ADM (isento)' : user?.plan?.name ?? '—'}
             </p>
             {!isAdm && user?.plan && (
-              <p className="mt-0.5 text-sm text-slate-500">
+              <p className="mt-0.5 text-sm text-neutral-500">
                 {user.plan.max_playlists} playlist{user.plan.max_playlists > 1 ? 's' : ''} disponível{user.plan.max_playlists > 1 ? 'is' : ''}
               </p>
             )}
@@ -193,7 +193,7 @@ export function MinhaAssinatura() {
           {!isAdm && !user?.plan?.is_free && (
             <Link
               to="/planos"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
             >
               Trocar plano
             </Link>
@@ -201,7 +201,7 @@ export function MinhaAssinatura() {
           {!isAdm && user?.plan?.is_free && (
             <Link
               to="/planos"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
             >
               Fazer upgrade
             </Link>
@@ -220,45 +220,45 @@ export function MinhaAssinatura() {
       {/* Assinatura */}
       {assinatura ? (
         <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-500">
             Assinatura
           </h2>
           <dl className="grid gap-3 sm:grid-cols-2">
             <div>
-              <dt className="text-xs text-slate-500">Plano</dt>
-              <dd className="font-medium text-slate-800">{assinatura.plan?.name}</dd>
+              <dt className="text-xs text-neutral-500">Plano</dt>
+              <dd className="font-medium text-neutral-800">{assinatura.plan?.name}</dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Ciclo</dt>
-              <dd className="font-medium text-slate-800">
+              <dt className="text-xs text-neutral-500">Ciclo</dt>
+              <dd className="font-medium text-neutral-800">
                 {assinatura.billing_cycle === 'monthly' ? 'Mensal' : 'Anual'}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Status</dt>
+              <dt className="text-xs text-neutral-500">Status</dt>
               <dd className="flex items-center gap-2">
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    statusLabel[assinatura.status]?.color ?? 'bg-slate-100 text-slate-500'
+                    statusLabel[assinatura.status]?.color ?? 'bg-neutral-100 text-neutral-500'
                   }`}
                 >
                   {statusLabel[assinatura.status]?.label ?? assinatura.status}
                 </span>
                 {assinatura.provider === 'asaas' && (
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-600">
+                  <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-bold text-success-600">
                     PIX
                   </span>
                 )}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Próxima cobrança</dt>
-              <dd className="font-medium text-slate-800">
+              <dt className="text-xs text-neutral-500">Próxima cobrança</dt>
+              <dd className="font-medium text-neutral-800">
                 {fmtDate(assinatura.current_period_end)}
               </dd>
             </div>
             {assinatura.status === 'past_due' && assinatura.past_due_since && (
-              <div className="sm:col-span-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+              <div className="sm:col-span-2 rounded-lg bg-danger-50 p-3 text-sm text-danger-700">
                 Pagamento em atraso desde {fmtDate(assinatura.past_due_since)}.
                 Você tem até 5 dias para regularizar antes do cancelamento automático.
               </div>
@@ -266,30 +266,30 @@ export function MinhaAssinatura() {
           </dl>
 
           {(assinatura.status === 'active' || assinatura.status === 'past_due' || assinatura.status === 'pending') && (
-            <div className="mt-6 border-t border-slate-100 pt-4">
+            <div className="mt-6 border-t border-neutral-100 pt-4">
               {!mostrarCancelar ? (
                 <button
                   onClick={() => setMostrarCancelar(true)}
-                  className="text-sm text-red-500 hover:underline"
+                  className="text-sm text-danger-600 hover:underline"
                 >
                   Cancelar assinatura
                 </button>
               ) : (
-                <div className="rounded-lg bg-red-50 p-4">
-                  <p className="mb-3 text-sm font-medium text-red-700">
+                <div className="rounded-lg bg-danger-50 p-4">
+                  <p className="mb-3 text-sm font-medium text-danger-700">
                     Tem certeza? Seu plano voltará para FREE e playlists excedentes serão bloqueadas.
                   </p>
                   <div className="flex gap-3">
                     <button
                       onClick={cancelar}
                       disabled={cancelando}
-                      className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                      className="rounded-md bg-danger-600 px-4 py-2 text-sm font-semibold text-white hover:bg-danger-700 disabled:opacity-50"
                     >
                       {cancelando ? 'Cancelando…' : 'Confirmar cancelamento'}
                     </button>
                     <button
                       onClick={() => setMostrarCancelar(false)}
-                      className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                      className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
                     >
                       Manter assinatura
                     </button>
@@ -300,27 +300,27 @@ export function MinhaAssinatura() {
           )}
         </div>
       ) : !isAdm && user?.plan?.is_free ? (
-        <div className="rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center">
-          <p className="text-slate-500">Você está no plano gratuito.</p>
+        <div className="rounded-xl border-2 border-dashed border-neutral-200 bg-white p-6 text-center">
+          <p className="text-neutral-500">Você está no plano gratuito.</p>
           <Link
             to="/planos"
-            className="mt-4 inline-block rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="mt-4 inline-block rounded-lg bg-teal-600 px-5 py-2 text-sm font-semibold text-white hover:bg-teal-700"
           >
             Ver planos disponíveis
           </Link>
         </div>
       ) : !isAdm ? (
         <div className="rounded-xl bg-white p-6 shadow-sm text-center">
-          <p className="text-slate-500">Nenhuma assinatura ativa encontrada.</p>
+          <p className="text-neutral-500">Nenhuma assinatura ativa encontrada.</p>
           <button
             onClick={carregarDados}
-            className="mt-4 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="mt-4 rounded-lg bg-teal-600 px-5 py-2 text-sm font-semibold text-white hover:bg-teal-700"
           >
             Verificar novamente
           </button>
           <Link
             to="/planos"
-            className="mt-2 block text-sm text-indigo-600 hover:underline"
+            className="mt-2 block text-sm text-teal-600 hover:underline"
           >
             Ir para planos
           </Link>
@@ -330,13 +330,13 @@ export function MinhaAssinatura() {
       {/* Histórico de pagamentos */}
       {pagamentos.length > 0 && (
         <div className="rounded-xl bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-6 py-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <div className="border-b border-neutral-100 px-6 py-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
               Histórico de pagamentos
             </h2>
           </div>
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-400">
+            <thead className="bg-neutral-50 text-xs uppercase text-neutral-400">
               <tr>
                 <th className="px-4 py-3">Data</th>
                 <th className="px-4 py-3">Valor</th>
@@ -344,14 +344,14 @@ export function MinhaAssinatura() {
                 <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-neutral-100">
               {pagamentos.map((p) => (
                 <tr key={p.id}>
-                  <td className="px-4 py-3 text-slate-600">{fmtDate(p.paid_at ?? p.created_at)}</td>
-                  <td className="px-4 py-3 font-medium text-slate-800">{fmt(Number(p.amount))}</td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-4 py-3 text-neutral-600">{fmtDate(p.paid_at ?? p.created_at)}</td>
+                  <td className="px-4 py-3 font-medium text-neutral-800">{fmt(Number(p.amount))}</td>
+                  <td className="px-4 py-3 text-neutral-500">
                     {p.provider === 'asaas' ? (
-                      <span className="font-bold text-emerald-600 text-xs">PIX</span>
+                      <span className="font-bold text-success-600 text-xs">PIX</span>
                     ) : (
                       <>
                         {p.payment_method ?? '—'}

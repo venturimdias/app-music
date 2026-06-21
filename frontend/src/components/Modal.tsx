@@ -21,10 +21,10 @@ export function Modal({ title, open, onClose, children }: ModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+          <h2 className="text-lg font-display font-semibold text-marinho">{title}</h2>
           <button
             onClick={onClose}
-            className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-md px-2 py-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
             aria-label="Fechar"
           >
             ✕

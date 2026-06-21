@@ -4,16 +4,16 @@ import { useToast } from '../../components/Toast';
 import type { Payment, Plan, Subscription } from '../../types';
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  active:   { label: 'Ativa',        color: 'bg-emerald-100 text-emerald-700' },
-  pending:  { label: 'Pendente',     color: 'bg-yellow-100 text-yellow-700' },
-  past_due: { label: 'Inadimplente', color: 'bg-red-100 text-red-700' },
-  canceled: { label: 'Cancelada',    color: 'bg-slate-100 text-slate-500' },
+  active:   { label: 'Ativa',        color: 'bg-success-100 text-success-700' },
+  pending:  { label: 'Pendente',     color: 'bg-warning-100 text-warning-700' },
+  past_due: { label: 'Inadimplente', color: 'bg-danger-100 text-danger-700' },
+  canceled: { label: 'Cancelada',    color: 'bg-neutral-100 text-neutral-500' },
 };
 
 const paymentStatusColor: Record<string, string> = {
-  paid:     'text-emerald-600',
-  failed:   'text-red-600',
-  refunded: 'text-slate-500',
+  paid:     'text-success-600',
+  failed:   'text-danger-600',
+  refunded: 'text-neutral-500',
 };
 
 function fmt(v: number) {
@@ -128,14 +128,14 @@ export function AdminPagamentos() {
   const tabClass = (t: TabType) =>
     `rounded-md px-4 py-2 text-sm font-medium transition-colors ${
       tab === t
-        ? 'bg-indigo-600 text-white'
-        : 'text-slate-600 hover:bg-slate-100'
+        ? 'bg-teal-600 text-white'
+        : 'text-neutral-600 hover:bg-neutral-100'
     }`;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-slate-800">Pagamentos</h1>
+        <h1 className="text-2xl font-display font-bold text-marinho">Pagamentos</h1>
         <div className="flex gap-2">
           <button className={tabClass('assinaturas')} onClick={() => setTab('assinaturas')}>
             Assinaturas
@@ -150,16 +150,16 @@ export function AdminPagamentos() {
       {tab === 'assinaturas' && (
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase text-slate-400">MRR estimado</p>
-            <p className="mt-1 text-2xl font-bold text-slate-800">{fmt(mrr + arr)}</p>
+            <p className="text-xs font-semibold uppercase text-neutral-400">MRR estimado</p>
+            <p className="mt-1 text-2xl font-display font-bold text-marinho">{fmt(mrr + arr)}</p>
           </div>
           <div className="rounded-xl bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase text-slate-400">Assinaturas ativas</p>
-            <p className="mt-1 text-2xl font-bold text-slate-800">{ativas}</p>
+            <p className="text-xs font-semibold uppercase text-neutral-400">Assinaturas ativas</p>
+            <p className="mt-1 text-2xl font-display font-bold text-marinho">{ativas}</p>
           </div>
           <div className="rounded-xl bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase text-slate-400">Total registros</p>
-            <p className="mt-1 text-2xl font-bold text-slate-800">{subsTotal}</p>
+            <p className="text-xs font-semibold uppercase text-neutral-400">Total registros</p>
+            <p className="mt-1 text-2xl font-display font-bold text-marinho">{subsTotal}</p>
           </div>
         </div>
       )}
@@ -168,7 +168,7 @@ export function AdminPagamentos() {
       <div className="overflow-hidden rounded-xl bg-white shadow-sm">
         {tab === 'assinaturas' ? (
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-400">
+            <thead className="bg-neutral-50 text-xs uppercase text-neutral-400">
               <tr>
                 <th className="px-4 py-3">Usuário</th>
                 <th className="px-4 py-3">Plano</th>
@@ -178,40 +178,40 @@ export function AdminPagamentos() {
                 <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-neutral-100">
               {carregando ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-neutral-400">
                     Carregando…
                   </td>
                 </tr>
               ) : subs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-neutral-400">
                     Nenhuma assinatura encontrada.
                   </td>
                 </tr>
               ) : (
                 subs.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50">
+                  <tr key={s.id} className="hover:bg-neutral-50">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800">{s.user?.nome ?? '—'}</p>
-                      <p className="text-xs text-slate-400">{s.user?.email}</p>
+                      <p className="font-medium text-neutral-800">{s.user?.nome ?? '—'}</p>
+                      <p className="text-xs text-neutral-400">{s.user?.email}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{s.plan?.name ?? '—'}</td>
-                    <td className="px-4 py-3 text-slate-600 capitalize">
+                    <td className="px-4 py-3 text-neutral-600">{s.plan?.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-neutral-600 capitalize">
                       {s.billing_cycle === 'monthly' ? 'Mensal' : 'Anual'}
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                          statusLabel[s.status]?.color ?? 'bg-slate-100 text-slate-500'
+                          statusLabel[s.status]?.color ?? 'bg-neutral-100 text-neutral-500'
                         }`}
                       >
                         {statusLabel[s.status]?.label ?? s.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500">
+                    <td className="px-4 py-3 text-neutral-500">
                       {fmtDate(s.current_period_end)}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -220,7 +220,7 @@ export function AdminPagamentos() {
                           setGrantModal(s);
                           setGrantPlanId(String(s.planId));
                         }}
-                        className="rounded-md px-3 py-1 text-indigo-600 hover:bg-indigo-50 text-xs"
+                        className="rounded-md px-3 py-1 text-teal-600 hover:bg-teal-100 text-xs"
                       >
                         Conceder acesso
                       </button>
@@ -232,7 +232,7 @@ export function AdminPagamentos() {
           </table>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-400">
+            <thead className="bg-neutral-50 text-xs uppercase text-neutral-400">
               <tr>
                 <th className="px-4 py-3">Data</th>
                 <th className="px-4 py-3">Usuário</th>
@@ -242,39 +242,39 @@ export function AdminPagamentos() {
                 <th className="px-4 py-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-neutral-100">
               {carregando ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-neutral-400">
                     Carregando…
                   </td>
                 </tr>
               ) : pays.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-neutral-400">
                     Nenhuma cobrança registrada.
                   </td>
                 </tr>
               ) : (
                 pays.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-slate-600">
+                  <tr key={p.id} className="hover:bg-neutral-50">
+                    <td className="px-4 py-3 text-neutral-600">
                       {fmtDate(p.paid_at ?? p.created_at)}
                     </td>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800">{p.user?.nome ?? '—'}</p>
-                      <p className="text-xs text-slate-400">{p.user?.email}</p>
+                      <p className="font-medium text-neutral-800">{p.user?.nome ?? '—'}</p>
+                      <p className="text-xs text-neutral-400">{p.user?.email}</p>
                     </td>
-                    <td className="px-4 py-3 font-medium text-slate-800">
+                    <td className="px-4 py-3 font-medium text-neutral-800">
                       {fmt(Number(p.amount))}
                     </td>
-                    <td className="px-4 py-3 text-slate-500 capitalize">
+                    <td className="px-4 py-3 text-neutral-500 capitalize">
                       {p.payment_method ?? '—'}
                       {p.card_last_digits && ` •••• ${p.card_last_digits}`}
                     </td>
                     <td
                       className={`px-4 py-3 font-medium ${
-                        paymentStatusColor[p.status] ?? 'text-slate-600'
+                        paymentStatusColor[p.status] ?? 'text-neutral-600'
                       }`}
                     >
                       {p.status === 'paid' ? 'Pago' : p.status === 'failed' ? 'Falhou' : 'Reembolsado'}
@@ -283,7 +283,7 @@ export function AdminPagamentos() {
                       {p.status === 'paid' && (
                         <button
                           onClick={() => reembolsar(p.id)}
-                          className="rounded-md px-3 py-1 text-red-500 hover:bg-red-50 text-xs"
+                          className="rounded-md px-3 py-1 text-danger-600 hover:bg-danger-50 text-xs"
                         >
                           Reembolsar
                         </button>
@@ -298,7 +298,7 @@ export function AdminPagamentos() {
 
         {/* Paginação */}
         {tab === 'assinaturas' && subsTotal > LIMIT && (
-          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
+          <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-3 text-sm text-neutral-500">
             <span>
               {(subsPage - 1) * LIMIT + 1}–{Math.min(subsPage * LIMIT, subsTotal)} de {subsTotal}
             </span>
@@ -306,14 +306,14 @@ export function AdminPagamentos() {
               <button
                 disabled={subsPage === 1}
                 onClick={() => setSubsPage((p) => p - 1)}
-                className="rounded-md px-3 py-1 hover:bg-slate-100 disabled:opacity-40"
+                className="rounded-md px-3 py-1 hover:bg-neutral-100 disabled:opacity-40"
               >
                 Anterior
               </button>
               <button
                 disabled={subsPage * LIMIT >= subsTotal}
                 onClick={() => setSubsPage((p) => p + 1)}
-                className="rounded-md px-3 py-1 hover:bg-slate-100 disabled:opacity-40"
+                className="rounded-md px-3 py-1 hover:bg-neutral-100 disabled:opacity-40"
               >
                 Próxima
               </button>
@@ -321,7 +321,7 @@ export function AdminPagamentos() {
           </div>
         )}
         {tab === 'pagamentos' && paysTotal > LIMIT && (
-          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-500">
+          <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-3 text-sm text-neutral-500">
             <span>
               {(paysPage - 1) * LIMIT + 1}–{Math.min(paysPage * LIMIT, paysTotal)} de {paysTotal}
             </span>
@@ -329,14 +329,14 @@ export function AdminPagamentos() {
               <button
                 disabled={paysPage === 1}
                 onClick={() => setPaysPage((p) => p - 1)}
-                className="rounded-md px-3 py-1 hover:bg-slate-100 disabled:opacity-40"
+                className="rounded-md px-3 py-1 hover:bg-neutral-100 disabled:opacity-40"
               >
                 Anterior
               </button>
               <button
                 disabled={paysPage * LIMIT >= paysTotal}
                 onClick={() => setPaysPage((p) => p + 1)}
-                className="rounded-md px-3 py-1 hover:bg-slate-100 disabled:opacity-40"
+                className="rounded-md px-3 py-1 hover:bg-neutral-100 disabled:opacity-40"
               >
                 Próxima
               </button>
@@ -349,15 +349,15 @@ export function AdminPagamentos() {
       {grantModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-lg font-bold text-slate-800">Conceder acesso</h3>
-            <p className="mb-3 text-sm text-slate-500">
+            <h3 className="mb-4 text-lg font-display font-bold text-marinho">Conceder acesso</h3>
+            <p className="mb-3 text-sm text-neutral-500">
               Usuário: <strong>{grantModal.user?.email}</strong>
             </p>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Plano</label>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">Plano</label>
             <select
               value={grantPlanId}
               onChange={(e) => setGrantPlanId(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
             >
               {planos.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -368,13 +368,13 @@ export function AdminPagamentos() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 onClick={() => setGrantModal(null)}
-                className="rounded-md px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
+                className="rounded-md px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-100"
               >
                 Cancelar
               </button>
               <button
                 onClick={concederAcesso}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
               >
                 Confirmar
               </button>

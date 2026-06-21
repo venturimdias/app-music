@@ -19,11 +19,11 @@ export function senhaValida(senha: string): boolean {
 }
 
 export const barraColor = [
-  'bg-red-500',
-  'bg-red-400',
-  'bg-amber-400',
-  'bg-amber-400',
-  'bg-emerald-500',
-  'bg-emerald-500',
+  'bg-danger-600',
+  'bg-danger-400',
+  'bg-warning-400',
+  'bg-warning-400',
+  'bg-success-600',
+  'bg-success-600',
 ];
 export const barraLabel = ['', 'Muito fraca', 'Fraca', 'Média', 'Boa', 'Forte'];

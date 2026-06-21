@@ -14,7 +14,7 @@ interface PlanAdm extends Plan {
 }
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none';
+  'w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none';
 
 export function AdminPlanos() {
   const { toast } = useToast();
@@ -122,10 +122,10 @@ export function AdminPlanos() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Gerenciar Planos</h1>
+        <h1 className="text-2xl font-display font-bold text-marinho">Gerenciar Planos</h1>
         <button
           onClick={abrirNovo}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
         >
           + Novo plano
         </button>
@@ -133,7 +133,7 @@ export function AdminPlanos() {
 
       <div className="overflow-hidden rounded-xl bg-white shadow">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
             <tr>
               <th className="px-4 py-3">Nome</th>
               <th className="px-4 py-3">Mensal</th>
@@ -143,47 +143,47 @@ export function AdminPlanos() {
               <th className="px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-neutral-100">
             {carregando ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-neutral-400">
                   Carregando…
                 </td>
               </tr>
             ) : planos.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-neutral-400">
                   Nenhum plano cadastrado.
                 </td>
               </tr>
             ) : (
               planos.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-800">
+                <tr key={p.id} className="hover:bg-neutral-50">
+                  <td className="px-4 py-3 font-medium text-neutral-800">
                     {p.name}
                     {p.is_free && (
-                      <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                      <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">
                         gratuito
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-neutral-600">
                     {Number(p.price_monthly) === 0
                       ? '—'
                       : `R$ ${Number(p.price_monthly).toFixed(2)}`}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-neutral-600">
                     {Number(p.price_yearly) === 0
                       ? '—'
                       : `R$ ${Number(p.price_yearly).toFixed(2)}`}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{p.max_playlists}</td>
+                  <td className="px-4 py-3 text-neutral-600">{p.max_playlists}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                         p.is_active
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'bg-success-100 text-success-700'
+                          : 'bg-neutral-100 text-neutral-500'
                       }`}
                     >
                       {p.is_active ? 'Ativo' : 'Inativo'}
@@ -192,7 +192,7 @@ export function AdminPlanos() {
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => abrirEditar(p)}
-                      className="rounded-md px-3 py-1 text-indigo-600 hover:bg-indigo-50"
+                      className="rounded-md px-3 py-1 text-teal-600 hover:bg-teal-100"
                     >
                       Editar
                     </button>
@@ -200,8 +200,8 @@ export function AdminPlanos() {
                       onClick={() => alternarAtivo(p)}
                       className={`ml-1 rounded-md px-3 py-1 ${
                         p.is_active
-                          ? 'text-slate-500 hover:bg-slate-100'
-                          : 'text-emerald-600 hover:bg-emerald-50'
+                          ? 'text-neutral-500 hover:bg-neutral-100'
+                          : 'text-success-600 hover:bg-success-50'
                       }`}
                     >
                       {p.is_active ? 'Desativar' : 'Ativar'}
@@ -222,17 +222,17 @@ export function AdminPlanos() {
         <form onSubmit={salvar}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-slate-700">Nome *</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Nome *</label>
               <input required value={nome} onChange={(e) => setNome(e.target.value)} className={inputClass} />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-slate-700">Descrição *</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Descrição *</label>
               <input required value={descricao} onChange={(e) => setDescricao(e.target.value)} className={inputClass} />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Preço mensal (R$) *</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Preço mensal (R$) *</label>
               <input
                 required type="number" min="0" step="0.01"
                 value={precoMensal} onChange={(e) => setPrecoMensal(e.target.value)}
@@ -241,7 +241,7 @@ export function AdminPlanos() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Preço anual (R$) *</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Preço anual (R$) *</label>
               <input
                 required type="number" min="0" step="0.01"
                 value={precoAnual} onChange={(e) => setPrecoAnual(e.target.value)}
@@ -250,7 +250,7 @@ export function AdminPlanos() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Máx. playlists *</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Máx. playlists *</label>
               <input
                 required type="number" min="1"
                 value={maxPlaylists} onChange={(e) => setMaxPlaylists(e.target.value)}
@@ -259,7 +259,7 @@ export function AdminPlanos() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-neutral-700">
                 Recursos incluídos
               </label>
               <div className="space-y-2">
@@ -275,7 +275,7 @@ export function AdminPlanos() {
                       <button
                         type="button"
                         onClick={() => removeFeature(idx)}
-                        className="rounded-md px-2 text-red-500 hover:bg-red-50"
+                        className="rounded-md px-2 text-danger-600 hover:bg-danger-50"
                       >
                         ✕
                       </button>
@@ -285,7 +285,7 @@ export function AdminPlanos() {
                 <button
                   type="button"
                   onClick={addFeature}
-                  className="text-sm text-indigo-600 hover:underline"
+                  className="text-sm text-teal-600 hover:underline"
                 >
                   + Adicionar recurso
                 </button>
@@ -293,7 +293,7 @@ export function AdminPlanos() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-neutral-700">
                 ID pagar.me (mensal)
               </label>
               <input
@@ -305,7 +305,7 @@ export function AdminPlanos() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-neutral-700">
                 ID pagar.me (anual)
               </label>
               <input
@@ -321,14 +321,14 @@ export function AdminPlanos() {
             <button
               type="button"
               onClick={() => setModalAberto(false)}
-              className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={salvando}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
             >
               {salvando ? 'Salvando…' : 'Salvar'}
             </button>

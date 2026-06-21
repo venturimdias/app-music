@@ -94,24 +94,24 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
         onClose={() => setAberto(false)}
       >
         {playlists === null ? (
-          <p className="text-sm text-slate-400">Carregando…</p>
+          <p className="text-sm text-neutral-400">Carregando…</p>
         ) : playlists.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-neutral-500">
             Você ainda não tem playlists.{' '}
-            <Link to="/playlists" className="font-medium text-indigo-600 hover:underline">
+            <Link to="/playlists" className="font-medium text-teal-600 hover:underline">
               Crie uma primeiro
             </Link>
             .
           </p>
         ) : (
           <>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
               Playlist
             </label>
             <select
               value={playlistId}
               onChange={(e) => setPlaylistId(Number(e.target.value))}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
             >
               {playlists.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -122,9 +122,9 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
 
             <p className="mb-6 mt-2 min-h-[1.25rem] text-xs">
               {carregandoDetalhe ? (
-                <span className="text-slate-400">Verificando…</span>
+                <span className="text-neutral-400">Verificando…</span>
               ) : jaNaPlaylist ? (
-                <span className="font-medium text-amber-600">
+                <span className="font-medium text-warning-600">
                   Esta música já está nesta playlist.
                 </span>
               ) : null}
@@ -134,7 +134,7 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
               <button
                 type="button"
                 onClick={() => setAberto(false)}
-                className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
               >
                 Cancelar
               </button>
@@ -142,7 +142,7 @@ export function AdicionarPlaylist({ song, className, children }: AdicionarPlayli
                 type="button"
                 onClick={adicionar}
                 disabled={adicionando || !playlistId || carregandoDetalhe || jaNaPlaylist}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {adicionando ? 'Adicionando…' : jaNaPlaylist ? 'Já adicionada' : 'Adicionar'}
               </button>

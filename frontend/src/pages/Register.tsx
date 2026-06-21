@@ -1,15 +1,18 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { User, Mail, Lock, KeyRound } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { PasswordInput } from '../components/PasswordInput';
+import { AuthLayout } from '../components/AuthLayout';
 import { ForcaSenha } from '../components/ForcaSenha';
 import { senhaValida as checarSenha } from '../utils/senha';
 import { RecaptchaError, obterTokenRecaptcha } from '../auth/recaptcha';
 
-const inputClass =
-  'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:border-indigo-500';
+const inputBase =
+  'w-full rounded-md border py-2 pl-10 text-sm transition-colors focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-400/40';
+const iconClass = 'pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-neutral-400';
 
 export function Register() {
   const { register } = useAuth();
@@ -50,83 +53,109 @@ export function Register() {
     }
   }
 
+  const bordaConfirmar =
+    confirmar.length > 0
+      ? senhasIguais
+        ? 'border-success-400'
+        : 'border-danger-400'
+      : 'border-nevoa';
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-xl bg-white p-8 shadow-md"
-      >
-        <h1 className="mb-6 text-center text-2xl font-bold text-slate-800">Criar conta</h1>
+    <AuthLayout>
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="mb-6">
+          <p className="mb-2 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-teal-600">
+            Comece agora
+          </p>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-marinho">
+            Criar sua conta
+          </h1>
+          <p className="mt-2 text-sm text-neutral-500">
+            Monte seu grupo de louvor e organize a primeira celebração em minutos.
+          </p>
+        </div>
 
         {/* Nome */}
-        <label className="mb-1 block text-sm font-medium text-slate-700">Nome</label>
-        <input
-          required
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          className={`${inputClass} mb-4 border-slate-300`}
-        />
+        <label className="mb-1 block font-display text-sm font-medium text-marinho">Nome</label>
+        <div className="relative mb-4">
+          <User size={16} className={iconClass} />
+          <input
+            required
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder="Seu nome"
+            className={`${inputBase} border-nevoa pr-3`}
+          />
+        </div>
 
         {/* Email */}
-        <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={`${inputClass} mb-4 border-slate-300`}
-        />
+        <label className="mb-1 block font-display text-sm font-medium text-marinho">Email</label>
+        <div className="relative mb-4">
+          <Mail size={16} className={iconClass} />
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="voce@igreja.com"
+            className={`${inputBase} border-nevoa pr-3`}
+          />
+        </div>
 
         {/* Senha */}
-        <label className="mb-1 block text-sm font-medium text-slate-700">Senha</label>
-        <PasswordInput
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={`${inputClass} border-slate-300`}
-        />
+        <label className="mb-1 block font-display text-sm font-medium text-marinho">Senha</label>
+        <div className="relative">
+          <Lock size={16} className={iconClass} />
+          <PasswordInput
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mínimo 8 caracteres"
+            className={`${inputBase} border-nevoa`}
+          />
+        </div>
 
         {/* Barra de força + checklist de requisitos */}
         <ForcaSenha senha={password} />
 
         {/* Confirmar senha */}
-        <label className="mb-1 block text-sm font-medium text-slate-700">Confirmar senha</label>
-        <PasswordInput
-          required
-          value={confirmar}
-          onChange={(e) => setConfirmar(e.target.value)}
-          className={`${inputClass} mb-1 ${
-            confirmar.length > 0
-              ? senhasIguais
-                ? 'border-emerald-400'
-                : 'border-red-400'
-              : 'border-slate-300'
-          }`}
-        />
+        <label className="mb-1 block font-display text-sm font-medium text-marinho">
+          Confirmar senha
+        </label>
+        <div className="relative mb-1">
+          <KeyRound size={16} className={iconClass} />
+          <PasswordInput
+            required
+            value={confirmar}
+            onChange={(e) => setConfirmar(e.target.value)}
+            placeholder="Repita a senha"
+            className={`${inputBase} ${bordaConfirmar}`}
+          />
+        </div>
         {confirmar.length > 0 && !senhasIguais && (
-          <p className="mb-3 text-xs text-red-500">As senhas não coincidem.</p>
+          <p className="mb-3 text-xs text-danger-600">As senhas não coincidem.</p>
         )}
         {confirmar.length > 0 && senhasIguais && (
-          <p className="mb-3 text-xs text-emerald-600">Senhas conferem.</p>
+          <p className="mb-3 text-xs text-success-600">Senhas conferem.</p>
         )}
         {confirmar.length === 0 && <div className="mb-4" />}
 
         <button
           type="submit"
           disabled={enviando || !senhaValida || !senhasIguais}
-          className="w-full rounded-md bg-indigo-600 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-md bg-teal-600 py-2.5 font-display text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {enviando ? 'Criando…' : 'Criar conta'}
         </button>
 
-        <p className="mt-4 text-center text-sm text-slate-500">
+        <p className="mt-5 text-center text-sm text-neutral-500">
           Já tem conta?{' '}
-          <Link to="/login" className="font-medium text-indigo-600 hover:underline">
+          <Link to="/login" className="font-display font-semibold text-teal-700 hover:underline">
             Entrar
           </Link>
         </p>
 
-        <p className="mt-4 text-center text-[11px] text-slate-400">
+        <p className="mt-6 text-center text-[11px] leading-relaxed text-neutral-400">
           Este site é protegido por reCAPTCHA e está sujeito à{' '}
           <a
             href="https://policies.google.com/privacy"
@@ -148,6 +177,6 @@ export function Register() {
           do Google.
         </p>
       </form>
-    </div>
+    </AuthLayout>
   );
 }

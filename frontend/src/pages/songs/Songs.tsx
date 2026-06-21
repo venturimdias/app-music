@@ -7,7 +7,7 @@ import { useToast } from '../../components/Toast';
 import type { Song } from '../../types';
 
 const selectClass =
-  'shrink-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none';
+  'shrink-0 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none';
 
 const OPCOES_POR_PAGINA = [10, 20, 40, 80];
 
@@ -123,11 +123,11 @@ export function Songs() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Músicas</h1>
+        <h1 className="text-2xl font-display font-bold text-marinho">Músicas</h1>
         {isAdm && (
           <Link
             to="/songs/new"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
           >
             Nova música
           </Link>
@@ -185,12 +185,12 @@ export function Songs() {
         {temFiltro && (
           <button
             onClick={limparFiltros}
-            className="rounded-md px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+            className="rounded-md px-3 py-2 text-sm font-medium text-teal-600 hover:bg-teal-100"
           >
             Limpar filtros
           </button>
         )}
-        <span className="ml-auto shrink-0 whitespace-nowrap text-sm text-slate-400">
+        <span className="ml-auto shrink-0 whitespace-nowrap text-sm text-neutral-400">
           {total} música{total !== 1 && 's'}
           {temFiltro && ' encontrada' + (total !== 1 ? 's' : '')}
         </span>
@@ -198,7 +198,7 @@ export function Songs() {
 
       <div className="overflow-hidden rounded-xl bg-white shadow">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="border-b border-nevoa bg-neutral-50 font-display text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
               <th className="px-4 py-3">Título</th>
               <th className="px-4 py-3">Momento(s)</th>
@@ -207,16 +207,16 @@ export function Songs() {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-neutral-100">
             {carregando ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-8 text-center text-neutral-400">
                   Carregando…
                 </td>
               </tr>
             ) : songs.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-8 text-center text-neutral-400">
                   {temFiltro
                     ? 'Nenhuma música encontrada com esses filtros.'
                     : 'Nenhuma música cadastrada.'}
@@ -227,19 +227,19 @@ export function Songs() {
                 <tr
                   key={song.id}
                   onClick={() => navigate(`/songs/${song.id}`)}
-                  className="cursor-pointer hover:bg-slate-50"
+                  className="cursor-pointer hover:bg-neutral-50"
                 >
-                  <td className="px-4 py-3 font-medium text-indigo-700">
+                  <td className="px-4 py-3 font-medium text-teal-700">
                     {song.titulo}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{juntar(song.momentos)}</td>
+                  <td className="px-4 py-3 text-neutral-500">{juntar(song.momentos)}</td>
                   <td
                     className="px-4 py-3 text-right"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <AdicionarPlaylist
                       song={song}
-                      className="rounded-md px-3 py-1 text-emerald-700 hover:bg-emerald-50"
+                      className="rounded-md px-3 py-1 text-success-700 hover:bg-success-50"
                     >
                       + Playlist
                     </AdicionarPlaylist>
@@ -247,13 +247,13 @@ export function Songs() {
                       <>
                         <button
                           onClick={() => navigate(`/songs/${song.id}/edit`)}
-                          className="ml-1 rounded-md px-3 py-1 text-indigo-600 hover:bg-indigo-50"
+                          className="ml-1 rounded-md px-3 py-1 text-teal-600 hover:bg-teal-100"
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => excluir(song)}
-                          className="ml-1 rounded-md px-3 py-1 text-red-600 hover:bg-red-50"
+                          className="ml-1 rounded-md px-3 py-1 text-danger-600 hover:bg-danger-50"
                         >
                           Excluir
                         </button>
@@ -270,7 +270,7 @@ export function Songs() {
       {/* Paginação */}
       {!carregando && total > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-500">
+          <label className="flex items-center gap-2 text-sm text-neutral-500">
             Por página
             <select
               value={porPagina}
@@ -283,7 +283,7 @@ export function Songs() {
             </select>
           </label>
 
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-neutral-400">
             {inicio}–{fim} de {total}
           </span>
 
@@ -291,17 +291,17 @@ export function Songs() {
             <button
               onClick={() => setPagina((p) => Math.max(1, p - 1))}
               disabled={pagina <= 1}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+              className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-40"
             >
               Anterior
             </button>
-            <span className="px-2 text-sm text-slate-500">
+            <span className="px-2 text-sm text-neutral-500">
               Página {pagina} de {totalPaginas}
             </span>
             <button
               onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
               disabled={pagina >= totalPaginas}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+              className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50 disabled:opacity-40"
             >
               Próxima
             </button>

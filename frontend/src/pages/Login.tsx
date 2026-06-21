@@ -1,10 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { Mail, Lock } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { PasswordInput } from '../components/PasswordInput';
+import { AuthLayout } from '../components/AuthLayout';
 import { RecaptchaError, obterTokenRecaptcha } from '../auth/recaptcha';
+
+const inputClass =
+  'w-full rounded-md border border-nevoa py-2 pl-10 text-sm transition-colors focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-400/40';
 
 export function Login() {
   const { login } = useAuth();
@@ -33,76 +38,92 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-xl bg-white p-8 shadow-md"
-      >
-        <h1 className="mb-1 text-center text-2xl font-bold text-slate-800">
-          ♪ LouvorApp
-        </h1>
-        <p className="mb-6 text-center text-sm text-slate-500">
-          Cifras litúrgicas e playlists
-        </p>
+    <AuthLayout>
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="mb-6">
+            <p className="mb-2 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-teal-600">
+              Bem-vindo de volta
+            </p>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-marinho">
+              Entrar no grupo
+            </h1>
+            <p className="mt-2 text-sm text-neutral-500">
+              Acesse o repertório e as celebrações do seu grupo de louvor.
+            </p>
+          </div>
 
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Email
-        </label>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-        />
+          <label className="mb-1 block font-display text-sm font-medium text-marinho">
+            Email
+          </label>
+          <div className="relative mb-4">
+            <Mail
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+            />
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="voce@igreja.com"
+              className={`${inputClass} pr-3`}
+            />
+          </div>
 
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Senha
-        </label>
-        <PasswordInput
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mb-6 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-        />
+          <label className="mb-1 block font-display text-sm font-medium text-marinho">
+            Senha
+          </label>
+          <div className="relative mb-6">
+            <Lock
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-neutral-400"
+            />
+            <PasswordInput
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className={inputClass}
+            />
+          </div>
 
-        <button
-          type="submit"
-          disabled={enviando}
-          className="w-full rounded-md bg-indigo-600 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-        >
-          {enviando ? 'Entrando…' : 'Entrar'}
-        </button>
-
-        <p className="mt-4 text-center text-sm text-slate-500">
-          Não tem conta?{' '}
-          <Link to="/register" className="font-medium text-indigo-600 hover:underline">
-            Cadastre-se
-          </Link>
-        </p>
-
-        <p className="mt-4 text-center text-[11px] text-slate-400">
-          Este site é protegido por reCAPTCHA e está sujeito à{' '}
-          <a
-            href="https://policies.google.com/privacy"
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
+          <button
+            type="submit"
+            disabled={enviando}
+            className="w-full rounded-md bg-teal-600 py-2.5 font-display text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:opacity-50"
           >
-            Política de Privacidade
-          </a>{' '}
-          e aos{' '}
-          <a
-            href="https://policies.google.com/terms"
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
-          >
-            Termos de Serviço
-          </a>{' '}
-          do Google.
-        </p>
-      </form>
-    </div>
+            {enviando ? 'Entrando…' : 'Entrar'}
+          </button>
+
+          <p className="mt-5 text-center text-sm text-neutral-500">
+            Ainda não tem conta?{' '}
+            <Link to="/register" className="font-display font-semibold text-teal-700 hover:underline">
+              Criar conta
+            </Link>
+          </p>
+
+          <p className="mt-6 text-center text-[11px] leading-relaxed text-neutral-400">
+            Este site é protegido por reCAPTCHA e está sujeito à{' '}
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              Política de Privacidade
+            </a>{' '}
+            e aos{' '}
+            <a
+              href="https://policies.google.com/terms"
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              Termos de Serviço
+            </a>{' '}
+            do Google.
+          </p>
+        </form>
+    </AuthLayout>
   );
 }

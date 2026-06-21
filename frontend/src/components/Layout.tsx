@@ -1,21 +1,49 @@
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import {
+  Home,
+  Music,
+  ListMusic,
+  CalendarDays,
+  Clock,
+  Mic,
+  KeyRound,
+  Sparkles,
+  CreditCard,
+  Receipt,
+  Users,
+  ShieldCheck,
+  LogOut,
+  Menu,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
+import logoBranco from '../assets/louvorapp-horizontal-branco.png';
+import logoColorido from '../assets/louvorapp-horizontal.png';
 
-function NavItem({ to, label }: { to: string; label: string }) {
+function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: LucideIcon }) {
   return (
     <NavLink
       to={to}
       end={to === '/'}
       className={({ isActive }) =>
-        `flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+        `flex items-center gap-3 rounded-md px-3 py-2 font-display text-sm transition-colors ${
           isActive
-            ? 'bg-indigo-600 text-white'
-            : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+            ? 'bg-teal-400/15 font-semibold text-white'
+            : 'font-medium text-white/65 hover:bg-white/5 hover:text-white'
         }`
       }
     >
-      {label}
+      {({ isActive }) => (
+        <>
+          <Icon
+            className={isActive ? 'text-teal-300' : 'text-white/55'}
+            size={19}
+            strokeWidth={isActive ? 2.4 : 2}
+          />
+          {label}
+        </>
+      )}
     </NavLink>
   );
 }
@@ -65,7 +93,7 @@ function NavGroup({
         type="button"
         onClick={alternar}
         aria-expanded={aberto}
-        className="mt-5 mb-1 flex w-full items-center justify-between rounded px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 transition-colors hover:text-slate-300"
+        className="mt-5 mb-1 flex w-full items-center justify-between rounded px-3 py-1 font-display text-[10px] font-semibold uppercase tracking-widest text-white/40 transition-colors hover:text-white/70"
       >
         <span>{label}</span>
         <Chevron aberto={aberto} />
@@ -88,44 +116,43 @@ export function Layout() {
   const sidebarContent = (
     <div className="flex h-full flex-col">
       {/* Logo */}
-      <div className="flex items-center gap-2 border-b border-slate-700/60 px-5 py-5">
-        <span className="text-2xl leading-none">♪</span>
-        <span className="text-base font-bold tracking-tight text-white">LouvorApp</span>
+      <div className="flex items-center border-b border-white/10 px-5 py-5">
+        <img src={logoBranco} alt="LouvorApp" className="h-7 w-auto" />
       </div>
 
       {/* Links */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <NavItem to="/" label="Início" />
+        <NavItem to="/" label="Início" icon={Home} />
 
         <NavGroup label="Cadastros" storageKey="nav:cadastros" defaultOpen>
-          <NavItem to="/songs" label="Músicas" />
-          <NavItem to="/playlists" label="Playlists" />
+          <NavItem to="/songs" label="Músicas" icon={Music} />
+          <NavItem to="/playlists" label="Playlists" icon={ListMusic} />
 
           {user?.perfil === 'ADM' && (
             <>
-              <NavItem to="/tempo" label="Tempos litúrgicos" />
-              <NavItem to="/momento" label="Momentos litúrgicos" />
-              <NavItem to="/artista" label="Artistas" />
+              <NavItem to="/tempo" label="Tempos litúrgicos" icon={CalendarDays} />
+              <NavItem to="/momento" label="Momentos litúrgicos" icon={Clock} />
+              <NavItem to="/artista" label="Artistas" icon={Mic} />
             </>
           )}
         </NavGroup>
 
         {user?.perfil !== 'DEMO' && (
           <NavGroup label="Administração" storageKey="nav:administracao">
-            <NavItem to="/account/password" label="Alterar senha" />
+            <NavItem to="/account/password" label="Alterar senha" icon={KeyRound} />
             {user?.perfil === 'PARTICIPANTE' && (
               <>
-                <NavItem to="/planos" label="Planos" />
-                <NavItem to="/account/subscription" label="Minha assinatura" />
+                <NavItem to="/planos" label="Planos" icon={Sparkles} />
+                <NavItem to="/account/subscription" label="Minha assinatura" icon={CreditCard} />
               </>
             )}
 
             {user?.perfil === 'ADM' && (
               <>
-                <NavItem to="/admin/planos" label="Planos" />
-                <NavItem to="/admin/pagamentos" label="Pagamentos" />
-                <NavItem to="/usuario" label="Usuários" />
-                <NavItem to="/perfil" label="Perfis" />
+                <NavItem to="/admin/planos" label="Planos" icon={Sparkles} />
+                <NavItem to="/admin/pagamentos" label="Pagamentos" icon={Receipt} />
+                <NavItem to="/usuario" label="Usuários" icon={Users} />
+                <NavItem to="/perfil" label="Perfis" icon={ShieldCheck} />
               </>
             )}
           </NavGroup>
@@ -133,15 +160,16 @@ export function Layout() {
       </nav>
 
       {/* Rodapé: usuário + sair */}
-      <div className="border-t border-slate-700/60 px-3 py-3">
+      <div className="border-t border-white/10 px-3 py-3">
         <div className="mb-2 px-3">
           <p className="truncate text-xs font-medium text-white">{user?.email}</p>
-          <p className="text-[10px] text-slate-400">{user?.perfil}</p>
+          <p className="text-[10px] text-white/45">{user?.perfil}</p>
         </div>
         <button
           onClick={handleLogout}
-          className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2 font-display text-sm font-medium text-white/65 transition-colors hover:bg-white/5 hover:text-white"
         >
+          <LogOut size={19} strokeWidth={2} className="text-white/55" />
           Sair
         </button>
       </div>
@@ -149,9 +177,9 @@ export function Layout() {
   );
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex min-h-screen bg-papel">
       {/* ── Sidebar desktop (md+) ──────────────────────────────────────────── */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col bg-slate-900 md:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col bg-marinho-profundo md:flex">
         {sidebarContent}
       </aside>
 
@@ -163,7 +191,7 @@ export function Layout() {
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-60 flex-col bg-slate-900 transition-transform duration-200 md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-60 flex-col bg-marinho-profundo transition-transform duration-200 md:hidden ${
           open ? 'flex translate-x-0' : 'flex -translate-x-full'
         }`}
       >
@@ -173,17 +201,15 @@ export function Layout() {
       {/* ── Área principal ─────────────────────────────────────────────────── */}
       <div className="flex min-h-screen flex-1 flex-col md:ml-60">
         {/* Topbar mobile */}
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-nevoa bg-white px-4 py-3 md:hidden">
           <button
             onClick={() => setOpen(true)}
-            className="rounded-md p-1 text-slate-600 hover:bg-slate-100"
+            className="rounded-md p-1 text-marinho hover:bg-papel"
             aria-label="Abrir menu"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <Menu className="h-5 w-5" />
           </button>
-          <span className="text-sm font-bold text-slate-800">♪ LouvorApp</span>
+          <img src={logoColorido} alt="LouvorApp" className="h-6 w-auto" />
         </header>
 
         <main className="flex-1 px-4 py-6 md:px-8">

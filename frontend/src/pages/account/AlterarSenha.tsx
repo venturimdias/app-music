@@ -8,7 +8,7 @@ import { ForcaSenha } from '../../components/ForcaSenha';
 import { senhaValida as checarSenha } from '../../utils/senha';
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none';
+  'w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none';
 
 export function AlterarSenha() {
   const { logout } = useAuth();
@@ -50,13 +50,13 @@ export function AlterarSenha() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold text-slate-800">Alterar senha</h1>
+      <h1 className="mb-4 text-2xl font-display font-bold text-marinho">Alterar senha</h1>
 
       <form
         onSubmit={handleSubmit}
         className="max-w-md rounded-xl bg-white p-6 shadow"
       >
-        <label className="mb-1 block text-sm font-medium text-slate-700">
+        <label className="mb-1 block text-sm font-medium text-neutral-700">
           Senha atual
         </label>
         <PasswordInput
@@ -66,7 +66,7 @@ export function AlterarSenha() {
           className={`${inputClass} mb-4`}
         />
 
-        <label className="mb-1 block text-sm font-medium text-slate-700">
+        <label className="mb-1 block text-sm font-medium text-neutral-700">
           Nova senha
         </label>
         <PasswordInput
@@ -79,7 +79,7 @@ export function AlterarSenha() {
         {/* Barra de força + checklist de requisitos */}
         <ForcaSenha senha={nova} />
 
-        <label className="mb-1 block text-sm font-medium text-slate-700">
+        <label className="mb-1 block text-sm font-medium text-neutral-700">
           Confirmar nova senha
         </label>
         <PasswordInput
@@ -89,23 +89,23 @@ export function AlterarSenha() {
           className={`${inputClass} mb-1 ${
             confirmar.length > 0
               ? senhasIguais
-                ? 'border-emerald-400'
-                : 'border-red-400'
+                ? 'border-success-400'
+                : 'border-danger-400'
               : ''
           }`}
         />
         {confirmar.length > 0 && !senhasIguais && (
-          <p className="mb-3 text-xs text-red-500">As senhas não coincidem.</p>
+          <p className="mb-3 text-xs text-danger-600">As senhas não coincidem.</p>
         )}
         {confirmar.length > 0 && senhasIguais && (
-          <p className="mb-3 text-xs text-emerald-600">Senhas conferem.</p>
+          <p className="mb-3 text-xs text-success-600">Senhas conferem.</p>
         )}
         {confirmar.length === 0 && <div className="mb-4" />}
 
         <button
           type="submit"
           disabled={enviando || !podeEnviar}
-          className="w-full rounded-md bg-indigo-600 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-md bg-teal-600 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {enviando ? 'Alterando…' : 'Alterar senha'}
         </button>

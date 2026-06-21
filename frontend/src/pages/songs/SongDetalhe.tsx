@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { AdicionarPlaylist } from '../../components/AdicionarPlaylist';
+import { KeyBadge } from '../../components/KeyBadge';
 import { useToast } from '../../components/Toast';
 import { cifraParaHtml, transporCifra } from '../../utils/cifra';
 import { TONS, type Song, type SongTom } from '../../types';
@@ -31,7 +32,7 @@ export function SongDetalhe() {
   }, [id]);
 
   if (!song) {
-    return <div className="py-10 text-center text-slate-400">Carregando…</div>;
+    return <div className="py-10 text-center text-neutral-400">Carregando…</div>;
   }
 
   const textoExibido =
@@ -59,21 +60,24 @@ export function SongDetalhe() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">{song.titulo}</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Tom original: <strong>{song.tom}</strong>
-            {song.artistas.length > 0 && <> · {juntar(song.artistas)}</>}
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            {song.tempos.length > 0 && <>Tempo: {juntar(song.tempos)} · </>}
-            {song.momentos.length > 0 && <>Momento: {juntar(song.momentos)}</>}
-          </p>
+        <div className="flex items-start gap-3">
+          <KeyBadge tomo={tomAtivo || song.tom} variant="solid" size="lg" />
+          <div>
+            <h1 className="text-2xl font-display font-bold text-marinho">{song.titulo}</h1>
+            <p className="mt-1 text-sm text-neutral-500">
+              Tom original: <strong>{song.tom}</strong>
+              {song.artistas.length > 0 && <> · {juntar(song.artistas)}</>}
+            </p>
+            <p className="mt-1 text-xs text-neutral-400">
+              {song.tempos.length > 0 && <>Tempo: {juntar(song.tempos)} · </>}
+              {song.momentos.length > 0 && <>Momento: {juntar(song.momentos)}</>}
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <AdicionarPlaylist
             song={song}
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="rounded-md bg-success-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-success-700"
           >
             + Playlist
           </AdicionarPlaylist>
@@ -82,7 +86,7 @@ export function SongDetalhe() {
               href={song.cifra}
               target="_blank"
               rel="noreferrer"
-              className="rounded-md bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-300"
+              className="rounded-md bg-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-300"
             >
               Cifra original
             </a>
@@ -92,7 +96,7 @@ export function SongDetalhe() {
               href={song.video}
               target="_blank"
               rel="noreferrer"
-              className="rounded-md bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-300"
+              className="rounded-md bg-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-300"
             >
               Vídeo
             </a>
@@ -102,7 +106,7 @@ export function SongDetalhe() {
               href={song.slide}
               target="_blank"
               rel="noreferrer"
-              className="rounded-md bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-300"
+              className="rounded-md bg-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-300"
             >
               Slide
             </a>
@@ -110,7 +114,7 @@ export function SongDetalhe() {
           {user?.perfil === 'ADM' && (
             <Link
               to={`/songs/${song.id}/edit`}
-              className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700"
+              className="rounded-md bg-teal-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-teal-700"
             >
               Editar
             </Link>
@@ -120,14 +124,17 @@ export function SongDetalhe() {
 
       <div className="rounded-xl bg-white p-6 shadow">
         <div className="mb-4 flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 font-display text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
+            Transpor
+          </span>
           {TONS.map((t) => (
             <button
               key={t}
               onClick={() => setTomAtivo(t)}
               className={`min-w-10 rounded-md px-2.5 py-1.5 text-sm font-bold transition-colors ${
                 tomAtivo === t
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
               {t}
@@ -137,14 +144,14 @@ export function SongDetalhe() {
           <button
             onClick={salvarTom}
             disabled={salvando || tomAtivo === tomSalvo}
-            className="ml-auto rounded-md bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-40"
+            className="ml-auto rounded-md bg-success-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-success-700 disabled:opacity-40"
           >
             {tomAtivo === tomSalvo ? `Tom ${tomAtivo} salvo` : `Salvar tom ${tomAtivo}`}
           </button>
         </div>
 
         <pre
-          className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-slate-800"
+          className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
           dangerouslySetInnerHTML={{ __html: cifraParaHtml(textoExibido) }}
         />
       </div>

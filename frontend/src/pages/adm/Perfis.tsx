@@ -80,10 +80,10 @@ export function Perfis() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Perfis</h1>
+        <h1 className="text-2xl font-display font-bold text-marinho">Perfis</h1>
         <button
           onClick={abrirNovo}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
         >
           Novo perfil
         </button>
@@ -91,42 +91,42 @@ export function Perfis() {
 
       <div className="overflow-hidden rounded-xl bg-white shadow">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
             <tr>
               <th className="px-4 py-3">Título</th>
               <th className="px-4 py-3">Músicas/playlist</th>
               <th className="w-40 px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-neutral-100">
             {carregando ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={3} className="px-4 py-8 text-center text-neutral-400">
                   Carregando…
                 </td>
               </tr>
             ) : (
               perfis.map((perfil) => (
-                <tr key={perfil.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-800">
+                <tr key={perfil.id} className="hover:bg-neutral-50">
+                  <td className="px-4 py-3 font-medium text-neutral-800">
                     {perfil.titulo}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-neutral-600">
                     {perfil.max_songs_per_playlist ?? (
-                      <span className="text-slate-400">sem limite</span>
+                      <span className="text-neutral-400">sem limite</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                       <button
                         onClick={() => abrirEdicao(perfil)}
-                        className="rounded-md px-3 py-1 text-indigo-600 hover:bg-indigo-50"
+                        className="rounded-md px-3 py-1 text-teal-600 hover:bg-teal-100"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => excluir(perfil)}
-                        className="rounded-md px-3 py-1 text-red-600 hover:bg-red-50"
+                        className="rounded-md px-3 py-1 text-danger-600 hover:bg-danger-50"
                       >
                         Excluir
                       </button>
@@ -145,17 +145,17 @@ export function Perfis() {
         onClose={() => setModalAberto(false)}
       >
         <form onSubmit={salvar}>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Título *
           </label>
           <input
             required
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
-            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Limite de músicas por playlist
           </label>
           <input
@@ -164,9 +164,9 @@ export function Perfis() {
             placeholder="Deixe em branco para sem limite"
             value={limiteMusicas}
             onChange={(e) => setLimiteMusicas(e.target.value)}
-            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
-          <p className="mb-6 text-xs text-slate-400">
+          <p className="mb-6 text-xs text-neutral-400">
             Em branco = sem limite. Ex.: perfil DEMO costuma ser 4.
           </p>
 
@@ -174,14 +174,14 @@ export function Perfis() {
             <button
               type="button"
               onClick={() => setModalAberto(false)}
-              className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={salvando}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
             >
               {salvando ? 'Salvando…' : 'Salvar'}
             </button>

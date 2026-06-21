@@ -96,10 +96,10 @@ export function Usuarios() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">Usuários</h1>
+        <h1 className="text-2xl font-display font-bold text-marinho">Usuários</h1>
         <button
           onClick={abrirNovo}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
         >
           Novo usuário
         </button>
@@ -107,7 +107,7 @@ export function Usuarios() {
 
       <div className="overflow-hidden rounded-xl bg-white shadow">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="bg-neutral-50 text-xs uppercase text-neutral-500">
             <tr>
               <th className="px-4 py-3">Nome</th>
               <th className="px-4 py-3">Email</th>
@@ -116,32 +116,32 @@ export function Usuarios() {
               <th className="w-40 px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-neutral-100">
             {carregando ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-neutral-400">
                   Carregando…
                 </td>
               </tr>
             ) : (
               usuarios.map((usuario) => (
-                <tr key={usuario.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-800">
+                <tr key={usuario.id} className="hover:bg-neutral-50">
+                  <td className="px-4 py-3 font-medium text-neutral-800">
                     {usuario.nome}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{usuario.email}</td>
+                  <td className="px-4 py-3 text-neutral-500">{usuario.email}</td>
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
                       {tituloPerfil(usuario.perfilId)}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     {usuario.plan && !usuario.plan.is_free ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-success-100 px-2 py-0.5 text-xs font-medium text-success-700">
                         ✓ {usuario.plan.name}
                       </span>
                     ) : (
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                      <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
                         {usuario.plan?.name ?? 'Gratuito'}
                       </span>
                     )}
@@ -150,13 +150,13 @@ export function Usuarios() {
                     <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                       <button
                         onClick={() => abrirEdicao(usuario)}
-                        className="rounded-md px-3 py-1 text-indigo-600 hover:bg-indigo-50"
+                        className="rounded-md px-3 py-1 text-teal-600 hover:bg-teal-100"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => excluir(usuario)}
-                        className="rounded-md px-3 py-1 text-red-600 hover:bg-red-50"
+                        className="rounded-md px-3 py-1 text-danger-600 hover:bg-danger-50"
                       >
                         Excluir
                       </button>
@@ -175,17 +175,17 @@ export function Usuarios() {
         onClose={() => setModalAberto(false)}
       >
         <form onSubmit={salvar}>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Nome *
           </label>
           <input
             required
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Email *
           </label>
           <input
@@ -193,10 +193,10 @@ export function Usuarios() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Senha {editando ? '(deixe em branco para manter)' : '*'}
           </label>
           <input
@@ -205,17 +205,17 @@ export function Usuarios() {
             minLength={password ? 8 : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           />
 
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-neutral-700">
             Perfil *
           </label>
           <select
             required
             value={perfilId}
             onChange={(e) => setPerfilId(Number(e.target.value))}
-            className="mb-6 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="mb-6 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
           >
             {perfis.map((perfil) => (
               <option key={perfil.id} value={perfil.id}>
@@ -228,14 +228,14 @@ export function Usuarios() {
             <button
               type="button"
               onClick={() => setModalAberto(false)}
-              className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={salvando}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
             >
               {salvando ? 'Salvando…' : 'Salvar'}
             </button>

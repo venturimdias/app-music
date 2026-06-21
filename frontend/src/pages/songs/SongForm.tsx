@@ -14,7 +14,7 @@ import {
 } from '../../types';
 
 const inputClass =
-  'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none';
+  'w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none';
 
 // Grupo de "chips" clicáveis para as relações N:N (tempo/momento/artista).
 function MultiSelect({
@@ -34,9 +34,9 @@ function MultiSelect({
 }) {
   return (
     <div className="mb-4">
-      <label className="mb-1 block text-sm font-medium text-slate-700">
+      <label className="mb-1 block text-sm font-medium text-neutral-700">
         {label}
-        {max && <span className="text-slate-400"> (máx. {max})</span>}
+        {max && <span className="text-neutral-400"> (máx. {max})</span>}
       </label>
       <div className="flex flex-wrap gap-1.5">
         {itens.map((item) => {
@@ -50,8 +50,8 @@ function MultiSelect({
               onClick={() => onToggle(item.id)}
               className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                 ativo
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40'
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 disabled:opacity-40'
               }`}
             >
               {item.titulo}
@@ -61,7 +61,7 @@ function MultiSelect({
         <button
           type="button"
           onClick={onNovo}
-          className="rounded-full border border-dashed border-indigo-400 px-3 py-1 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+          className="rounded-full border border-dashed border-teal-400 px-3 py-1 text-sm font-medium text-teal-600 hover:bg-teal-100"
         >
           + Novo
         </button>
@@ -219,21 +219,21 @@ export function SongForm() {
     <>
     <form onSubmit={salvar}>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-2xl font-display font-bold text-marinho">
           {id ? 'Editar música' : 'Nova música'}
         </h1>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => navigate('/songs')}
-            className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200"
+            className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-200"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={salvando}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
           >
             {salvando ? 'Salvando…' : id ? 'Atualizar' : 'Salvar'}
           </button>
@@ -244,7 +244,7 @@ export function SongForm() {
       <div className="mb-6 rounded-xl bg-white p-6 shadow">
         <div className="mb-4 grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
               Título *
             </label>
             <input
@@ -255,7 +255,7 @@ export function SongForm() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
               Tom original *
             </label>
             <select
@@ -272,7 +272,7 @@ export function SongForm() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
               Cifra (URL da cifra original)
             </label>
             <input
@@ -283,7 +283,7 @@ export function SongForm() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
               Vídeo
             </label>
             <input
@@ -294,7 +294,7 @@ export function SongForm() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
               Slide
             </label>
             <input
@@ -335,8 +335,8 @@ export function SongForm() {
       {/* Seções 1 e 2 da spec: editar | visualizar */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl bg-white p-6 shadow">
-          <label className="mb-2 block text-sm font-semibold text-slate-700">
-            Editar música * <span className="font-normal text-slate-400">
+          <label className="mb-2 block text-sm font-semibold text-neutral-700">
+            Editar música * <span className="font-normal text-neutral-400">
               (texto puro, acordes entre colchetes: [D], [Em7]…)
             </span>
           </label>
@@ -346,12 +346,12 @@ export function SongForm() {
             onChange={(e) => setDescricao(e.target.value)}
             rows={18}
             spellCheck={false}
-            className="w-full rounded-md border border-slate-300 p-3 font-mono text-sm leading-7 focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-md border border-neutral-300 p-3 font-mono text-sm leading-7 focus:border-teal-500 focus:outline-none"
           />
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow">
-          <p className="mb-2 text-sm font-semibold text-slate-700">
+          <p className="mb-2 text-sm font-semibold text-neutral-700">
             Visualizar música
           </p>
           <div className="mb-3 flex flex-wrap gap-1.5">
@@ -362,8 +362,8 @@ export function SongForm() {
                 onClick={() => transporPreview(t)}
                 className={`min-w-10 rounded-md px-2.5 py-1.5 text-sm font-bold transition-colors ${
                   tomPreview === t
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                 }`}
               >
                 {t}
@@ -371,7 +371,7 @@ export function SongForm() {
             ))}
           </div>
           <pre
-            className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-slate-800"
+            className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
             dangerouslySetInnerHTML={{ __html: cifraParaHtml(descricao) }}
           />
         </div>
@@ -386,7 +386,7 @@ export function SongForm() {
       onClose={() => setNovoRecurso(null)}
     >
       <form onSubmit={salvarNovo}>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
+        <label className="mb-1 block text-sm font-medium text-neutral-700">
           Título *
         </label>
         <input
@@ -394,30 +394,30 @@ export function SongForm() {
           autoFocus
           value={novoTitulo}
           onChange={(e) => setNovoTitulo(e.target.value)}
-          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          className="mb-4 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
         />
 
-        <label className="mb-1 block text-sm font-medium text-slate-700">
+        <label className="mb-1 block text-sm font-medium text-neutral-700">
           Descrição
         </label>
         <input
           value={novaDescricao}
           onChange={(e) => setNovaDescricao(e.target.value)}
-          className="mb-6 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          className="mb-6 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
         />
 
         <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={() => setNovoRecurso(null)}
-            className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={salvandoNovo}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
           >
             {salvandoNovo ? 'Salvando…' : 'Salvar'}
           </button>
