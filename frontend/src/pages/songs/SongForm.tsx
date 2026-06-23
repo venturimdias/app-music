@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { ComboboxMulti } from '../../components/ComboboxMulti';
@@ -89,6 +89,7 @@ export function SongForm() {
   const [video, setVideo] = useState('');
   const [slide, setSlide] = useState('');
   const [descricao, setDescricao] = useState('');
+  const descricaoRef = useRef<HTMLTextAreaElement>(null);
   const [tempoIds, setTempoIds] = useState<number[]>([]);
   const [momentoIds, setMomentoIds] = useState<number[]>([]);
   const [artistaIds, setArtistaIds] = useState<number[]>([]);
@@ -134,6 +135,14 @@ export function SongForm() {
     }
     carregar();
   }, [id]);
+
+  // Altura mínima vem do atributo rows; cresce com o conteúdo a partir daí.
+  useEffect(() => {
+    const el = descricaoRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [descricao]);
 
   function toggle(lista: number[], setLista: (v: number[]) => void, itemId: number) {
     setLista(
@@ -356,12 +365,13 @@ export function SongForm() {
             </span>
           </label>
           <textarea
+            ref={descricaoRef}
             required
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             rows={18}
             spellCheck={false}
-            className="w-full rounded-md border border-neutral-300 p-3 font-mono text-sm leading-7 focus:border-teal-500 focus:outline-none"
+            className="w-full resize-none overflow-hidden rounded-md border border-neutral-300 p-3 font-mono text-sm leading-7 focus:border-teal-500 focus:outline-none"
           />
         </div>
 
