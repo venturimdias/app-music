@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../../api/client';
+import { CompartilharEquipe } from '../../components/CompartilharEquipe';
 import { Modal } from '../../components/Modal';
 import { useToast } from '../../components/Toast';
 import type { Playlist, PlaylistMusica } from '../../types';
@@ -68,23 +68,6 @@ export function PlaylistDetalhe() {
     });
   }
   itens.sort((a, b) => a.ordem - b.ordem);
-
-  async function copiar(texto: string, rotulo: string) {
-    try {
-      await navigator.clipboard.writeText(texto);
-    } catch {
-      // Fallback para HTTP sem contexto seguro (acesso via IP na rede local)
-      const el = document.createElement('textarea');
-      el.value = texto;
-      el.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
-      document.body.appendChild(el);
-      el.focus();
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-    }
-    toast(`${rotulo} copiado!`);
-  }
 
   async function remover(songId: number, titulo: string) {
     if (!window.confirm(`Remover "${titulo}" da playlist?`)) return;
@@ -197,41 +180,7 @@ export function PlaylistDetalhe() {
       </div>
 
       {/* Compartilhamento: URL pública + senha + QR code */}
-      <div className="mb-6 rounded-xl border border-teal-300 bg-teal-100 p-4">
-        <p className="mb-2 text-sm font-semibold text-marinho">
-          Compartilhe com a equipe
-        </p>
-        <div className="flex flex-wrap items-start gap-4">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <code className="rounded bg-white px-2 py-1 text-teal-700">
-              {urlPublica}
-            </code>
-            <button
-              onClick={() => copiar(urlPublica, 'URL')}
-              className="rounded-md bg-teal-600 px-3 py-1 text-xs font-semibold text-white hover:bg-teal-700"
-            >
-              Copiar URL
-            </button>
-            <span className="ml-2 text-marinho">
-              Senha: <code className="rounded bg-white px-2 py-1 font-bold text-teal-700">{playlist.senha}</code>
-            </span>
-            <button
-              onClick={() => copiar(playlist.senha, 'Senha')}
-              className="rounded-md bg-teal-600 px-3 py-1 text-xs font-semibold text-white hover:bg-teal-700"
-            >
-              Copiar senha
-            </button>
-          </div>
-          <div className="ml-auto flex flex-col items-center gap-1">
-            <div className="rounded-lg bg-white p-2 shadow-sm">
-              <QRCodeSVG value={urlPublica} size={112} />
-            </div>
-            <span className="text-xs text-marinho">
-              Aponte a câmera para abrir
-            </span>
-          </div>
-        </div>
-      </div>
+      <CompartilharEquipe url={urlPublica} senha={playlist.senha} />
 
       {/* Repertório ordenável */}
       <div className="overflow-hidden rounded-xl bg-white shadow">

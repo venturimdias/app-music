@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../../api/client';
+import { CompartilharEquipe } from '../../components/CompartilharEquipe';
 import { useToast } from '../../components/Toast';
 import { Oracoes } from '../../components/Oracoes';
 import { cifraParaHtml, soLetra, transporCifra } from '../../utils/cifra';
@@ -290,6 +291,11 @@ export function ListaRepertorio() {
         {/* ── Aba Playlist ─────────────────────────────────────────────── */}
         {aba === 'playlist' && (
           <>
+            <CompartilharEquipe
+              url={`${window.location.origin}/lista-repertorio/${slug}`}
+              senha={senha}
+            />
+
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
