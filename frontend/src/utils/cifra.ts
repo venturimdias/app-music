@@ -16,14 +16,35 @@ const PITCH: Record<string, number> = {
   'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
 };
 
+// Marca um bloco de várias linhas (ex.: refrão repetido) para ficar todo em
+// negrito — "[[" abre e "]]" fecha, colado no começo/fim da linha (do mesmo
+// jeito que "[" já era usado) ou numa linha própria. Distinto do "[Acorde]"
+// inline (um colchete só) para não conflitar com a transposição/realce dele.
+const ABRE_BLOCO = '[[';
+const FECHA_BLOCO = ']]';
+
 // Um token é acorde se for nota + sufixo conhecido (+ extensão/baixo opcional).
 // Estrito de propósito, para não classificar palavras (CASA, AMOR) como acorde.
+// Inclui +/- (aumentado/alterado, ex.: G7+, C7-5), comuns nas cifras do app.
 const RE_ACORDE =
-  /^[A-G][#b]?(m|maj|min|dim|aug|sus)?\d*(\([^)]*\))?(\/[A-G][#b]?)?$/;
+  /^[A-G][#b]?(m|maj|min|dim|aug|sus)?\d*[+-]?\d*(\([^)]*\))?(\/[A-G][#b]?)?$/;
 
-// Linha composta só de acordes (ignorando colchetes de seção e parênteses).
+// Linhas de instrução tipo "Intro/INTRO: Bm7 G7+" guardam o rótulo (até os
+// dois-pontos) intacto e só tratam o que vem depois como acordes — sem isso,
+// transporNotas trocaria letras A-G dentro do próprio rótulo (ex.: "ABERTURA").
+function separarRotulo(linha: string): { rotulo: string; resto: string } | null {
+  const m = linha.match(/^([^:\n]*:\s*)(.*)$/);
+  if (!m) return null;
+  const [, rotulo, resto] = m;
+  if (!resto.trim()) return null;
+  return { rotulo, resto };
+}
+
+// Linha composta só de acordes (ignorando colchetes de seção, parênteses e
+// um rótulo opcional antes de ":").
 export function ehLinhaAcorde(linha: string): boolean {
-  const limpa = linha.replace(/[[\]]/g, ' ').trim();
+  const corpo = separarRotulo(linha)?.resto ?? linha;
+  const limpa = corpo.replace(/[[\]]/g, ' ').trim();
   if (!limpa) return false;
   return limpa
     .split(/\s+/)
@@ -62,7 +83,11 @@ export function transporCifra(
   return texto
     .split('\n')
     .map((linha) => {
-      if (ehLinhaAcorde(linha)) return transporNotas(linha, semitons);
+      if (ehLinhaAcorde(linha)) {
+        const sep = separarRotulo(linha);
+        if (sep) return sep.rotulo + transporNotas(sep.resto, semitons);
+        return transporNotas(linha, semitons);
+      }
       // linha de letra: transpõe só os acordes inline
       return linha
         .replace(/\[([^\]\n]*)\]/g, (_, c) => `[${transporNotas(c, semitons)}]`)
@@ -71,17 +96,21 @@ export function transporCifra(
     .join('\n');
 }
 
-// Remove os acordes, deixando só a letra: descarta linhas de acorde e os
-// tokens inline [..]/{{..}}, além de marcadores de seção [ ] soltos.
+// Remove os acordes, deixando só a letra: descarta linhas de acorde, os
+// marcadores de bloco [[ ]] e os tokens inline [..]/{{..}}, além de
+// marcadores de seção [ ] soltos.
 export function soLetra(texto: string): string {
   return texto
     .split('\n')
-    .filter((l) => !ehLinhaAcorde(l))
+    .filter((l) => {
+      const t = l.trim();
+      return t !== ABRE_BLOCO && t !== FECHA_BLOCO && !ehLinhaAcorde(l);
+    })
     .map((l) =>
       l
         .replace(/\[[^\]\n]*\]|\{\{[^}\n]*\}\}/g, '')
-        .replace(/^\s*\[/, '')
-        .replace(/\]\s*$/, '')
+        .replace(/^\s*\[+/, '')
+        .replace(/\]+\s*$/, '')
         .replace(/\s+$/, ''),
     )
     .join('\n')
@@ -89,15 +118,53 @@ export function soLetra(texto: string): string {
     .trim();
 }
 
-// Converte a marcação [Acorde] / {{Acorde}} em <span class="acorde"> para
-// renderizar com destaque (escapando HTML antes, por segurança).
-export function cifraParaHtml(texto: string): string {
+function escapeHtml(texto: string): string {
   return texto
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\{\{/g, '<span class="acorde">')
-    .replace(/\}\}/g, '</span>')
-    .replace(/\[/g, '<span class="acorde">')
-    .replace(/\]/g, '</span>');
+    .replace(/>/g, '&gt;');
+}
+
+// Converte os acordes em <span class="acorde"> para renderizar em destaque
+// (negrito + cor, ver .acorde no index.css): linhas 100% de acordes inteiras,
+// dentro de linhas de letra os tokens [Acorde] / {{Acorde}}, e blocos inteiros
+// entre marcadores [[ / ]] (ex.: refrão repetido, letra + acordes negritados).
+export function cifraParaHtml(texto: string): string {
+  let dentroBloco = false;
+  return texto
+    .split('\n')
+    .map((linhaOriginal) => {
+      let linha = linhaOriginal;
+
+      // Abre o bloco se "[[" aparece no começo da linha (só espaços antes) —
+      // tanto colado em acordes/letra quanto numa linha só com o marcador.
+      if (!dentroBloco) {
+        const i = linha.indexOf(ABRE_BLOCO);
+        if (i !== -1 && linha.slice(0, i).trim() === '') {
+          linha = linha.slice(i + ABRE_BLOCO.length);
+          dentroBloco = true;
+        }
+      }
+
+      if (dentroBloco) {
+        // Fecha o bloco se "]]" aparece no final da linha (só espaços depois).
+        const fim = linha.lastIndexOf(FECHA_BLOCO);
+        if (fim !== -1 && linha.slice(fim + FECHA_BLOCO.length).trim() === '') {
+          linha = linha.slice(0, fim);
+          dentroBloco = false;
+        }
+        return linha.trim() ? `<span class="acorde">${escapeHtml(linha)}</span>` : '';
+      }
+
+      if (ehLinhaAcorde(linha)) {
+        const sep = separarRotulo(linha);
+        const rotulo = sep ? escapeHtml(sep.rotulo) : '';
+        const corpo = sep ? sep.resto : linha;
+        return `${rotulo}<span class="acorde">${escapeHtml(corpo)}</span>`;
+      }
+      return escapeHtml(linha)
+        .replace(/\{\{([^}\n]*)\}\}/g, '<span class="acorde">$1</span>')
+        .replace(/\[([^\]\n]*)\]/g, '<span class="acorde">$1</span>');
+    })
+    .join('\n');
 }
