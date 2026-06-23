@@ -3,7 +3,7 @@ import { useAuth } from '../auth/AuthContext';
 export function Home() {
   const { user } = useAuth();
 
-  const primeiroNome = user?.email?.split('@')[0] ?? '';
+  const primeiroNome = user?.nome?.trim().split(' ')[0] ?? '';
 
   return (
     <div className="space-y-8">

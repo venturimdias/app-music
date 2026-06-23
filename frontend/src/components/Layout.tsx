@@ -162,7 +162,10 @@ export function Layout() {
       {/* Rodapé: usuário + sair */}
       <div className="border-t border-white/10 px-3 py-3">
         <div className="mb-2 px-3">
-          <p className="truncate text-xs font-medium text-white">{user?.email}</p>
+          {user?.nome && (
+            <p className="truncate text-sm font-semibold text-white">{user.nome}</p>
+          )}
+          <p className="truncate text-xs font-medium text-white/70">{user?.email}</p>
           <p className="text-[10px] text-white/45">{user?.perfil}</p>
         </div>
         <button

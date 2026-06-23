@@ -77,6 +77,7 @@ export class AuthService {
   signToken(user: User): string {
     return this.jwt.sign({
       sub: user.id,
+      nome: user.nome,
       email: user.email,
       perfilId: user.perfilId,
       perfil: user.perfil?.titulo,

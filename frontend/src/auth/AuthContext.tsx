@@ -10,6 +10,7 @@ import type { Plan } from '../types';
 
 export interface AuthUser {
   sub: number;
+  nome: string;
   email: string;
   perfilId: number;
   perfil: 'ADM' | 'PARTICIPANTE' | 'DEMO';
