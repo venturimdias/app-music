@@ -25,9 +25,10 @@ const FECHA_BLOCO = ']]';
 
 // Um token é acorde se for nota + sufixo conhecido (+ extensão/baixo opcional).
 // Estrito de propósito, para não classificar palavras (CASA, AMOR) como acorde.
-// Inclui +/- (aumentado/alterado, ex.: G7+, C7-5), comuns nas cifras do app.
+// Inclui +/- (aumentado/alterado, ex.: G7+, C7-5) e ° (diminuto, ex.: D#°),
+// comuns nas cifras do app.
 const RE_ACORDE =
-  /^[A-G][#b]?(m|maj|min|dim|aug|sus)?\d*[+-]?\d*(\([^)]*\))?(\/[A-G][#b]?)?$/;
+  /^[A-G][#b]?(m|maj|min|dim|aug|sus|°)?\d*[+-]?\d*(\([^)]*\))?(\/[A-G][#b]?)?$/;
 
 // Linhas de instrução tipo "Intro/INTRO: Bm7 G7+" guardam o rótulo (até os
 // dois-pontos) intacto e só tratam o que vem depois como acordes — sem isso,
