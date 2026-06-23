@@ -185,8 +185,12 @@ export function SongForm() {
     }
   }
 
-  async function salvar(e: FormEvent) {
+  async function salvar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // O botão clicado (Salvar/Atualizar x "...e ir ao detalhe") decide o destino.
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const irParaDetalhe = submitter?.dataset.destino === 'detalhe';
+
     setSalvando(true);
     try {
       const body = {
@@ -200,14 +204,16 @@ export function SongForm() {
         momentoIds,
         artistaIds,
       };
+      let songId = id;
       if (id) {
         await api.put(`/songs/${id}`, body);
         toast('Música atualizada');
       } else {
-        await api.post('/songs', body);
+        const res = await api.post<Song>('/songs', body);
+        songId = String(res.data.id);
         toast('Música cadastrada');
       }
-      navigate('/songs');
+      navigate(irParaDetalhe ? `/songs/${songId}` : '/songs');
     } catch {
       // erro já em toast pelo interceptor
     } finally {
@@ -232,6 +238,15 @@ export function SongForm() {
           </button>
           <button
             type="submit"
+            data-destino="detalhe"
+            disabled={salvando}
+            className="rounded-md bg-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-300 disabled:opacity-50"
+          >
+            {salvando ? 'Salvando…' : id ? 'Atualizar e ir ao detalhe' : 'Salvar e ir ao detalhe'}
+          </button>
+          <button
+            type="submit"
+            data-destino="lista"
             disabled={salvando}
             className="rounded-md bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
           >
