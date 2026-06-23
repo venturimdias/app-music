@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { AdicionarPlaylist } from '../../components/AdicionarPlaylist';
@@ -21,24 +21,32 @@ export function Songs() {
   const navigate = useNavigate();
   const isAdm = user?.perfil === 'ADM';
 
+  // query string: fonte da verdade dos filtros/paginação ao carregar a página
+  // (permite voltar/recarregar/compartilhar o link mantendo o estado).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const numeroParam = (nome: string) => Number(searchParams.get(nome)) || 0;
+
   // dados
   const [songs, setSongs] = useState<Song[]>([]);
   const [total, setTotal] = useState(0);
   const [carregando, setCarregando] = useState(true);
   const [opcoes, setOpcoes] = useState<Filtros>({ tempos: [], momentos: [], artistas: [] });
 
-  // filtros (texto com debounce; selects imediatos)
-  const [busca, setBusca] = useState('');
-  const [buscaDescricao, setBuscaDescricao] = useState('');
-  const [buscaDebounce, setBuscaDebounce] = useState('');
-  const [descDebounce, setDescDebounce] = useState('');
-  const [filtroTempo, setFiltroTempo] = useState(0);
-  const [filtroMomento, setFiltroMomento] = useState(0);
-  const [filtroArtista, setFiltroArtista] = useState(0);
+  // filtros (texto com debounce; selects/abas imediatos)
+  const [busca, setBusca] = useState(() => searchParams.get('titulo') ?? '');
+  const [buscaDescricao, setBuscaDescricao] = useState(() => searchParams.get('letra') ?? '');
+  const [buscaDebounce, setBuscaDebounce] = useState(() => searchParams.get('titulo') ?? '');
+  const [descDebounce, setDescDebounce] = useState(() => searchParams.get('letra') ?? '');
+  const [filtroTempo, setFiltroTempo] = useState(() => numeroParam('tempo'));
+  const [filtroMomento, setFiltroMomento] = useState(() => numeroParam('momento'));
+  const [filtroArtista, setFiltroArtista] = useState(() => numeroParam('artista'));
 
   // paginação
-  const [porPagina, setPorPagina] = useState(10);
-  const [pagina, setPagina] = useState(1);
+  const [porPagina, setPorPagina] = useState(() => {
+    const limite = numeroParam('limit');
+    return OPCOES_POR_PAGINA.includes(limite) ? limite : 10;
+  });
+  const [pagina, setPagina] = useState(() => numeroParam('page') || 1);
 
   // Opções dos filtros: tempos/momentos/artistas em uso (endpoint dedicado,
   // acessível a qualquer usuário autenticado).
@@ -79,6 +87,28 @@ export function Songs() {
   useEffect(() => {
     carregar();
   }, [carregar]);
+
+  // Espelha filtros e paginação na URL (sem disparar navegação no histórico).
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    if (buscaDebounce.trim()) params.titulo = buscaDebounce.trim();
+    if (descDebounce.trim()) params.letra = descDebounce.trim();
+    if (filtroTempo) params.tempo = String(filtroTempo);
+    if (filtroMomento) params.momento = String(filtroMomento);
+    if (filtroArtista) params.artista = String(filtroArtista);
+    if (porPagina !== 10) params.limit = String(porPagina);
+    if (pagina !== 1) params.page = String(pagina);
+    setSearchParams(params, { replace: true });
+  }, [
+    buscaDebounce,
+    descDebounce,
+    filtroTempo,
+    filtroMomento,
+    filtroArtista,
+    porPagina,
+    pagina,
+    setSearchParams,
+  ]);
 
   const temFiltro = Boolean(
     busca || buscaDescricao || filtroTempo || filtroMomento || filtroArtista,
@@ -159,16 +189,6 @@ export function Songs() {
           ))}
         </select>
         <select
-          value={filtroMomento}
-          onChange={(e) => aoMudarSelect(setFiltroMomento, Number(e.target.value))}
-          className={selectClass}
-        >
-          <option value={0}>Todos os momentos</option>
-          {opcoes.momentos.map((m) => (
-            <option key={m.id} value={m.id}>{m.titulo}</option>
-          ))}
-        </select>
-        <select
           value={filtroArtista}
           onChange={(e) => aoMudarSelect(setFiltroArtista, Number(e.target.value))}
           className={selectClass}
@@ -178,6 +198,35 @@ export function Songs() {
             <option key={a.id} value={a.id}>{a.titulo}</option>
           ))}
         </select>
+      </div>
+
+      {/* Abas de momento (ordem litúrgica, vinda do backend) */}
+      <div className="mb-2 flex flex-nowrap gap-2 overflow-x-auto pb-1">
+        <button
+          type="button"
+          onClick={() => aoMudarSelect(setFiltroMomento, 0)}
+          className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+            filtroMomento === 0
+              ? 'bg-teal-600 text-white'
+              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+          }`}
+        >
+          Todos
+        </button>
+        {opcoes.momentos.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => aoMudarSelect(setFiltroMomento, m.id)}
+            className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              filtroMomento === m.id
+                ? 'bg-teal-600 text-white'
+                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+            }`}
+          >
+            {m.titulo}
+          </button>
+        ))}
       </div>
 
       {/* Linha abaixo: limpar filtros + contador */}

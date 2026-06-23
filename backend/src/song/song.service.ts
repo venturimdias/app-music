@@ -111,20 +111,22 @@ export class SongService implements OnModuleInit {
   // por alguma música (mesma semântica de antes, quando vinham das próprias
   // músicas carregadas). Acessível a qualquer usuário autenticado.
   async findFiltros() {
-    const distintos = (prop: 'tempos' | 'momentos' | 'artistas') =>
+    // Momentos seguem a ordem litúrgica da celebração (id de cadastro), não
+    // a ordem alfabética — por isso usam orderBy diferente dos demais.
+    const distintos = (prop: 'tempos' | 'momentos' | 'artistas', orderBy: 'titulo' | 'id') =>
       this.songs
         .createQueryBuilder('song')
         .innerJoin(`song.${prop}`, 'rel')
         .select('rel.id', 'id')
         .addSelect('rel.titulo', 'titulo')
         .distinct(true)
-        .orderBy('rel.titulo', 'ASC')
+        .orderBy(`rel.${orderBy}`, 'ASC')
         .getRawMany<{ id: number; titulo: string }>();
 
     const [temposArr, momentosArr, artistasArr] = await Promise.all([
-      distintos('tempos'),
-      distintos('momentos'),
-      distintos('artistas'),
+      distintos('tempos', 'titulo'),
+      distintos('momentos', 'id'),
+      distintos('artistas', 'titulo'),
     ]);
     return { tempos: temposArr, momentos: momentosArr, artistas: artistasArr };
   }
