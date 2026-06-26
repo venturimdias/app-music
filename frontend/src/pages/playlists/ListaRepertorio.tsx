@@ -4,7 +4,7 @@ import { api } from '../../api/client';
 import { CompartilharEquipe } from '../../components/CompartilharEquipe';
 import { useToast } from '../../components/Toast';
 import { Oracoes } from '../../components/Oracoes';
-import { cifraParaHtml, soLetra, transporCifra } from '../../utils/cifra';
+import { cifraParaHtml, detectarTom, soLetra, transporCifra } from '../../utils/cifra';
 import { TONS } from '../../types';
 import type { LiturgiaDia, PlaylistMusica, PlaylistPublica } from '../../types';
 import { formatarData } from './Playlists';
@@ -46,6 +46,9 @@ export function ListaRepertorio() {
   const [tomsAtivos, setTomsAtivos] = useState<Record<number, string>>({});
   // Quando false: mostra só a letra (soLetra) e oculta os botões de tom
   const [mostrarAcordes, setMostrarAcordes] = useState(true);
+  // Tom do salmo: base = tom em que foi escrito; ativo = tom para exibir
+  const [tomSalmoBase, setTomSalmoBase] = useState<string | null>(null);
+  const [tomSalmoAtivo, setTomSalmoAtivo] = useState<string | null>(null);
 
   const chave = `repertorio:${slug}`;
 
@@ -364,12 +367,62 @@ export function ListaRepertorio() {
 
                         {aberta && (
                           <div className="border-t border-neutral-100 px-4 py-4">
+                            {item.tipo === 'salmo' && mostrarAcordes && (() => {
+                              const tomDetectado = detectarTom(item.texto);
+                              const valorBase = tomSalmoBase ?? tomDetectado ?? '';
+                              return (
+                                <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                  {valorBase && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {TONS.map((t) => (
+                                        <button
+                                          key={t}
+                                          type="button"
+                                          onClick={() => setTomSalmoAtivo(t)}
+                                          className={`min-w-9 rounded-md px-2 py-1 text-xs font-bold transition-colors ${
+                                            (tomSalmoAtivo ?? valorBase) === t
+                                              ? 'bg-teal-600 text-white'
+                                              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                                          }`}
+                                        >
+                                          {t}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-2">
+                                    <label className="text-xs text-neutral-400">Tom original:</label>
+                                    <select
+                                      value={valorBase}
+                                      onChange={(e) => {
+                                        setTomSalmoBase(e.target.value);
+                                        setTomSalmoAtivo(e.target.value);
+                                      }}
+                                      className="rounded-md border border-neutral-300 px-2 py-1 text-xs font-bold text-neutral-700 focus:border-teal-500 focus:outline-none"
+                                    >
+                                      {!valorBase && <option value="">—</option>}
+                                      {TONS.map((t) => (
+                                        <option key={t} value={t}>{t}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                             <pre
                               className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
                               dangerouslySetInnerHTML={{
-                                __html: mostrarAcordes
-                                  ? cifraParaHtml(item.texto)
-                                  : soLetra(item.texto),
+                                __html: (() => {
+                                  const raw = item.texto;
+                                  if (!mostrarAcordes) return soLetra(raw);
+                                  if (item.tipo === 'salmo' && tomSalmoAtivo) {
+                                    const base = tomSalmoBase ?? detectarTom(raw);
+                                    if (base && base !== tomSalmoAtivo) {
+                                      return cifraParaHtml(transporCifra(raw, tomSalmoAtivo, base));
+                                    }
+                                  }
+                                  return cifraParaHtml(raw);
+                                })(),
                               }}
                             />
                           </div>

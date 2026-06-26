@@ -97,6 +97,26 @@ export function transporCifra(
     .join('\n');
 }
 
+// Detecta o tom da cifra a partir do primeiro acorde encontrado (linha de
+// acorde ou token inline [Acorde]). Retorna a nota no formato NOMES ou null.
+export function detectarTom(texto: string): string | null {
+  for (const linha of texto.split('\n')) {
+    const inline = linha.match(/\[([A-G][#b]?)/);
+    if (inline) {
+      const pc = PITCH[inline[1]];
+      if (pc !== undefined) return NOMES[pc];
+    }
+    if (ehLinhaAcorde(linha)) {
+      const m = linha.trim().match(/^[A-G][#b]?/);
+      if (m) {
+        const pc = PITCH[m[0]];
+        if (pc !== undefined) return NOMES[pc];
+      }
+    }
+  }
+  return null;
+}
+
 // Remove os acordes, deixando só a letra: descarta linhas de acorde, os
 // marcadores de bloco [[ ]] e os tokens inline [..]/{{..}}, além de
 // marcadores de seção [ ] soltos.
