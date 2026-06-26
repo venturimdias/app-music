@@ -6,6 +6,7 @@ import { Modal } from '../../components/Modal';
 import { useToast } from '../../components/Toast';
 import type { Playlist, PlaylistMusica } from '../../types';
 import { formatarData } from './Playlists';
+import { cifraParaHtml, soLetra } from '../../utils/cifra';
 
 // Item exibido na lista do repertório: música ou um dos itens litúrgicos.
 type ItemRepertorio =
@@ -26,6 +27,7 @@ export function PlaylistDetalhe() {
   const [descricao, setDescricao] = useState('');
   const [salmo, setSalmo] = useState('');
   const [antifonaEvangelho, setAntifonaEvangelho] = useState('');
+  const [mostrarAcordes, setMostrarAcordes] = useState(true);
 
   async function carregar() {
     const resPlaylist = await api.get<Playlist>(`/playlists/${id}`);
@@ -183,6 +185,19 @@ export function PlaylistDetalhe() {
       <CompartilharEquipe url={urlPublica} senha={playlist.senha} />
 
       {/* Repertório ordenável */}
+      <div className="mb-3 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setMostrarAcordes((v) => !v)}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            mostrarAcordes
+              ? 'bg-white text-neutral-700 shadow hover:bg-neutral-50'
+              : 'bg-teal-600 text-white hover:bg-teal-700'
+          }`}
+        >
+          {mostrarAcordes ? 'Ocultar acordes' : 'Mostrar acordes'}
+        </button>
+      </div>
       <div className="overflow-hidden rounded-xl bg-white shadow">
         {itens.length === 0 ? (
           <p className="px-4 py-8 text-center text-neutral-400">
@@ -257,9 +272,14 @@ export function PlaylistDetalhe() {
                         Remover
                       </button>
                     </div>
-                    <p className="whitespace-pre-wrap text-sm leading-6 text-neutral-700">
-                      {item.texto}
-                    </p>
+                    <pre
+                      className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
+                      dangerouslySetInnerHTML={{
+                        __html: mostrarAcordes
+                          ? cifraParaHtml(item.texto)
+                          : soLetra(item.texto),
+                      }}
+                    />
                   </div>
                 )}
               </li>

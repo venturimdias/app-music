@@ -364,9 +364,14 @@ export function ListaRepertorio() {
 
                         {aberta && (
                           <div className="border-t border-neutral-100 px-4 py-4">
-                            <p className="whitespace-pre-wrap text-sm leading-7 text-neutral-700">
-                              {item.texto}
-                            </p>
+                            <pre
+                              className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
+                              dangerouslySetInnerHTML={{
+                                __html: mostrarAcordes
+                                  ? cifraParaHtml(item.texto)
+                                  : soLetra(item.texto),
+                              }}
+                            />
                           </div>
                         )}
                       </li>
@@ -401,6 +406,10 @@ export function ListaRepertorio() {
                         <span className="w-6 text-right text-sm font-bold text-neutral-400">
                           {idx + 1}.
                         </span>
+                        <span className="flex flex-col items-center rounded-md bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700 leading-tight">
+                          <span className="hidden sm:block">Tom</span>
+                          <span>{tomAtivo}</span>
+                        </span>
                         <span className="flex min-w-0 flex-col">
                           <span className="font-medium text-neutral-800">
                             {m.song.titulo}
@@ -408,9 +417,6 @@ export function ListaRepertorio() {
                           {momentoStr && (
                             <span className="text-xs text-neutral-400">{momentoStr}</span>
                           )}
-                        </span>
-                        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">
-                          Tom: {tomAtivo}
                         </span>
                         <span className="ml-auto text-neutral-400">
                           {aberta ? '▲' : '▼'}
