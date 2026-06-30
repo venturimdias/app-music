@@ -71,7 +71,7 @@ export function ListaRepertorio() {
   // Objeto de tema: todas as variações de cor dark/light centralizadas aqui.
   const th = {
     page:      modoEscuro ? 'bg-neutral-900'         : 'bg-papel',
-    card:      modoEscuro ? 'bg-neutral-800'         : 'bg-white',
+    card:      modoEscuro ? 'bg-transparent'          : 'bg-white',
     cardHover: modoEscuro ? 'hover:bg-neutral-700/40': 'hover:bg-neutral-50',
     divider:   modoEscuro ? 'border-neutral-700'     : 'border-neutral-100',
     sticky:    modoEscuro ? 'bg-neutral-900/95'      : 'bg-white/95',
