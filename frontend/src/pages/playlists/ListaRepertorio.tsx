@@ -50,7 +50,23 @@ export function ListaRepertorio() {
   const [tomSalmoBase, setTomSalmoBase] = useState<string | null>(null);
   const [tomSalmoAtivo, setTomSalmoAtivo] = useState<string | null>(null);
 
+  // Vídeos abertos inline (por item.key)
+  const [videosAbertos, setVideosAbertos] = useState<Set<string>>(new Set());
+
   const chave = `repertorio:${slug}`;
+
+  function youtubeId(url: string): string | null {
+    const m = url.match(/(?:youtu\.be\/|[?&]v=)([\w-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  function toggleVideo(key: string) {
+    setVideosAbertos((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
 
   // Lê o cache validando o formato (descarta cache antigo/corrompido).
   function lerCache(): RepertorioSalvo | null {
@@ -444,11 +460,14 @@ export function ListaRepertorio() {
                   const conteudo = mostrarAcordes
                     ? cifraParaHtml(textoTransposto)
                     : soLetra(textoTransposto);
-                  const links = [
+                  const linksExtras = [
                     { url: m.song.cifra, rotulo: 'Cifra original' },
-                    { url: m.song.video, rotulo: 'Vídeo' },
                     { url: m.song.slide, rotulo: 'Slide' },
                   ].filter((l) => l.url);
+                  const videoUrl = m.song.video ?? null;
+                  const videoKey = item.key;
+                  const videoVisivel = videosAbertos.has(videoKey);
+                  const vidId = videoUrl ? youtubeId(videoUrl) : null;
 
                   return (
                     <li key={item.key} className="overflow-hidden rounded-xl bg-white shadow">
@@ -478,9 +497,9 @@ export function ListaRepertorio() {
 
                       {aberta && (
                         <div className="border-t border-neutral-100 px-4 py-4">
-                          {links.length > 0 && (
+                          {(linksExtras.length > 0 || videoUrl) && (
                             <div className="mb-3 flex flex-wrap gap-2">
-                              {links.map((l) => (
+                              {linksExtras.map((l) => (
                                 <a
                                   key={l.rotulo}
                                   href={l.url!}
@@ -491,6 +510,31 @@ export function ListaRepertorio() {
                                   {l.rotulo}
                                 </a>
                               ))}
+                              {videoUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleVideo(videoKey)}
+                                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                                    videoVisivel
+                                      ? 'bg-teal-600 text-white hover:bg-teal-700'
+                                      : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                  }`}
+                                >
+                                  {videoVisivel ? '✕ Fechar vídeo' : '▶ Vídeo'}
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {videoVisivel && vidId && (
+                            <div className="mb-3 aspect-video w-full overflow-hidden rounded-lg">
+                              <iframe
+                                src={`https://www.youtube.com/embed/${vidId}`}
+                                title="Vídeo"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="h-full w-full"
+                              />
                             </div>
                           )}
 
