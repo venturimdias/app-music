@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { CompartilharEquipe } from '../../components/CompartilharEquipe';
@@ -53,6 +53,11 @@ export function ListaRepertorio() {
   // Vídeos abertos inline (por item.key)
   const [videosAbertos, setVideosAbertos] = useState<Set<string>>(new Set());
 
+  // Auto-scroll teleprompter (por item.key)
+  const [scrollAtivos, setScrollAtivos] = useState<Set<string>>(new Set());
+  const [velocidades, setVelocidades] = useState<Record<string, number>>({});
+  const preRefs = useRef<Record<string, HTMLPreElement | null>>({});
+
   const chave = `repertorio:${slug}`;
 
   function youtubeId(url: string): string | null {
@@ -67,6 +72,45 @@ export function ListaRepertorio() {
       return next;
     });
   }
+
+  function toggleScroll(key: string) {
+    setScrollAtivos((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.clear(); // só um ativo por vez
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  function setVelocidade(key: string, v: number) {
+    setVelocidades((prev) => ({ ...prev, [key]: v }));
+  }
+
+  useEffect(() => {
+    if (scrollAtivos.size === 0) return;
+    const PIXELS_PER_FRAME_BASE = 0.4;
+    let frameId: number;
+    const tick = () => {
+      scrollAtivos.forEach((key) => {
+        const pre = preRefs.current[key];
+        if (!pre) return;
+        const speed = velocidades[key] ?? 3;
+        window.scrollBy(0, PIXELS_PER_FRAME_BASE * speed);
+        const rect = pre.getBoundingClientRect();
+        if (rect.bottom <= window.innerHeight + 10) {
+          const preTop = pre.getBoundingClientRect().top + window.scrollY - 120;
+          window.scrollTo({ top: preTop, behavior: 'instant' });
+        }
+      });
+      frameId = requestAnimationFrame(tick);
+    };
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [scrollAtivos, velocidades]);
 
   // Lê o cache validando o formato (descarta cache antigo/corrompido).
   function lerCache(): RepertorioSalvo | null {
@@ -199,6 +243,12 @@ export function ListaRepertorio() {
       if (nova.has(key)) nova.delete(key);
       else nova.add(key);
       return nova;
+    });
+    setScrollAtivos((prev) => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
     });
   }
 
@@ -425,7 +475,34 @@ export function ListaRepertorio() {
                                 </div>
                               );
                             })()}
+                            <div className="mb-3 flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => toggleScroll(item.key)}
+                                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                                  scrollAtivos.has(item.key)
+                                    ? 'bg-dourado-500 text-white hover:bg-dourado-600'
+                                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                }`}
+                              >
+                                {scrollAtivos.has(item.key) ? '⏹ Parar scroll' : '▶ Auto-scroll'}
+                              </button>
+                              <input
+                                type="range"
+                                min={1}
+                                max={10}
+                                value={velocidades[item.key] ?? 3}
+                                onChange={(e) => setVelocidade(item.key, Number(e.target.value))}
+                                className="h-1 w-24 accent-dourado-500"
+                                title="Velocidade do scroll"
+                              />
+                              <span className="text-xs text-neutral-400">
+                                {velocidades[item.key] ?? 3}×
+                              </span>
+                            </div>
+
                             <pre
+                              ref={(el) => { preRefs.current[item.key] = el; }}
                               className="overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800"
                               dangerouslySetInnerHTML={{
                                 __html: (() => {
@@ -538,6 +615,32 @@ export function ListaRepertorio() {
                             </div>
                           )}
 
+                          <div className="mb-3 flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => toggleScroll(item.key)}
+                              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                                scrollAtivos.has(item.key)
+                                  ? 'bg-dourado-500 text-white hover:bg-dourado-600'
+                                  : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                              }`}
+                            >
+                              {scrollAtivos.has(item.key) ? '⏹ Parar scroll' : '▶ Auto-scroll'}
+                            </button>
+                            <input
+                              type="range"
+                              min={1}
+                              max={10}
+                              value={velocidades[item.key] ?? 3}
+                              onChange={(e) => setVelocidade(item.key, Number(e.target.value))}
+                              className="h-1 w-24 accent-dourado-500"
+                              title="Velocidade do scroll"
+                            />
+                            <span className="text-xs text-neutral-400">
+                              {velocidades[item.key] ?? 3}×
+                            </span>
+                          </div>
+
                           {mostrarAcordes && (
                             <div className="mb-3 flex flex-wrap gap-1">
                               {TONS.map((t) => (
@@ -560,6 +663,7 @@ export function ListaRepertorio() {
                           )}
 
                           <pre
+                            ref={(el) => { preRefs.current[item.key] = el; }}
                             className="overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800"
                             dangerouslySetInnerHTML={{ __html: conteudo }}
                           />
