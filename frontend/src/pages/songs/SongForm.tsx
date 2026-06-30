@@ -402,13 +402,13 @@ export function SongForm() {
           <p className="mb-2 text-sm font-semibold text-neutral-700">
             Visualizar música
           </p>
-          <div className="mb-3 flex flex-wrap gap-1.5 md:flex-nowrap md:overflow-x-auto">
+          <div className="mb-3 flex flex-wrap gap-1">
             {TONS.map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => transporPreview(t)}
-                className={`min-w-10 rounded-md px-2.5 py-1.5 text-sm font-bold transition-colors ${
+                className={`min-w-8 rounded px-2 py-1 text-xs font-bold transition-colors ${
                   tomPreview === t
                     ? 'bg-teal-600 text-white'
                     : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
