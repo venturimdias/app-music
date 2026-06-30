@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
+import { Metronome, Play, Square, X } from 'lucide-react';
 import { api } from '../../api/client';
 import { CompartilharEquipe } from '../../components/CompartilharEquipe';
 import { useToast } from '../../components/Toast';
@@ -56,6 +57,10 @@ export function ListaRepertorio() {
   // Auto-scroll teleprompter (por item.key)
   const [scrollAtivos, setScrollAtivos] = useState<Set<string>>(new Set());
   const [velocidades, setVelocidades] = useState<Record<string, number>>({});
+  // Metrônomo independente (por item.key)
+  const [bpms, setBpms] = useState<Record<string, number>>({});
+  const [metronomosAtivos, setMetronomosAtivos] = useState<Set<string>>(new Set());
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const preRefs = useRef<Record<string, HTMLPreElement | null>>({});
   const scrollAccum = useRef(0);
 
@@ -91,6 +96,54 @@ export function ListaRepertorio() {
     setVelocidades((prev) => ({ ...prev, [key]: v }));
   }
 
+  function setBpm(key: string, v: number) {
+    setBpms((prev) => ({ ...prev, [key]: v }));
+  }
+
+  function toggleMetronomo(key: string) {
+    setMetronomosAtivos((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.clear(); // só um ativo por vez
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  // Metrônomo: toca um clique a cada batida enquanto ativo.
+  useEffect(() => {
+    if (metronomosAtivos.size === 0) return;
+
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext();
+    }
+    const ctx = audioCtxRef.current;
+
+    function playClick() {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 1000;
+      gain.gain.setValueAtTime(0.7, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.04);
+    }
+
+    const ids: ReturnType<typeof setInterval>[] = [];
+    metronomosAtivos.forEach((key) => {
+      playClick(); // toca imediatamente ao ativar
+      const id = setInterval(playClick, 60000 / (bpms[key] ?? 80));
+      ids.push(id);
+    });
+
+    return () => ids.forEach(clearInterval);
+  }, [metronomosAtivos, bpms]);
+
   useEffect(() => {
     if (scrollAtivos.size === 0) return;
     let frameId: number;
@@ -98,7 +151,7 @@ export function ListaRepertorio() {
       scrollAtivos.forEach((key) => {
         const pre = preRefs.current[key];
         if (!pre) return;
-        scrollAccum.current += ((velocidades[key] ?? 80) * 0.6) / 60;
+        scrollAccum.current += (velocidades[key] ?? 30) / 60;
         const pixels = Math.floor(scrollAccum.current);
         if (pixels > 0) {
           window.scrollBy(0, pixels);
@@ -479,42 +532,70 @@ export function ListaRepertorio() {
                                 </div>
                               );
                             })()}
-                            <div className="sticky top-0 z-10 mb-3 flex items-center gap-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
-                              <button
-                                type="button"
-                                onClick={() => toggleScroll(item.key)}
-                                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                                  scrollAtivos.has(item.key)
-                                    ? 'bg-dourado-500 text-white hover:bg-dourado-600'
-                                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-                                }`}
-                              >
-                                {scrollAtivos.has(item.key) ? '⏹ Parar scroll' : '▶ Auto-scroll'}
-                              </button>
+                            <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
+                              {/* Auto-scroll */}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleScroll(item.key)}
+                                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                                    scrollAtivos.has(item.key)
+                                      ? 'bg-dourado-500 text-white hover:bg-dourado-600'
+                                      : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                  }`}
+                                >
+                                  {scrollAtivos.has(item.key) ? <Square size={13} /> : <Play size={13} />}
+                                  Auto-scroll
+                                </button>
+                                <input
+                                  type="range"
+                                  min={5}
+                                  max={120}
+                                  value={velocidades[item.key] ?? 30}
+                                  onChange={(e) => setVelocidade(item.key, Number(e.target.value))}
+                                  className="h-1 w-20 accent-dourado-500"
+                                  title="Velocidade do scroll"
+                                />
+                              </div>
+                              {/* Metrônomo */}
                               <div className="flex items-center gap-1">
                                 <button
                                   type="button"
-                                  onClick={() => setVelocidade(item.key, Math.max(40, (velocidades[item.key] ?? 80) - 1))}
+                                  title="Metrônomo"
+                                  onClick={() => toggleMetronomo(item.key)}
+                                  className={`rounded-md p-1.5 transition-colors ${
+                                    metronomosAtivos.has(item.key)
+                                      ? 'bg-marinho text-white hover:bg-marinho/80'
+                                      : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                  }`}
+                                >
+                                  <Metronome size={15} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setBpm(item.key, Math.max(40, (bpms[item.key] ?? 80) - 1))}
                                   className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                                 >−</button>
                                 <input
                                   type="number"
                                   min={40}
                                   max={218}
-                                  value={velocidades[item.key] ?? 80}
-                                  onChange={(e) => setVelocidade(item.key, Math.min(218, Math.max(40, Number(e.target.value))))}
+                                  value={bpms[item.key] ?? 80}
+                                  onChange={(e) => setBpm(item.key, Math.min(218, Math.max(40, Number(e.target.value))))}
                                   className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => setVelocidade(item.key, Math.min(218, (velocidades[item.key] ?? 80) + 1))}
+                                  onClick={() => setBpm(item.key, Math.min(218, (bpms[item.key] ?? 80) + 1))}
                                   className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                                 >+</button>
                                 <span className="flex items-center text-xs text-neutral-400">
                                   BPM
                                   <span
-                                    className={`ml-[10px] inline-block h-5 w-5 rounded-full bg-dourado-500 ${scrollAtivos.has(item.key) ? 'bpm-beat' : 'opacity-40'}`}
-                                    style={{ animationDuration: `${60 / (velocidades[item.key] ?? 80)}s` }}
+                                    className={`ml-[10px] inline-block h-5 w-5 rounded-full bg-dourado-500 transition-opacity ${
+                                      metronomosAtivos.has(item.key) ? 'bpm-beat' : 'opacity-20'
+                                    }`}
+                                    style={metronomosAtivos.has(item.key) ? { animationDuration: `${60 / (bpms[item.key] ?? 80)}s` } : undefined}
                                   />
                                 </span>
                               </div>
@@ -593,7 +674,8 @@ export function ListaRepertorio() {
 
                       {aberta && (
                         <div className="border-t border-neutral-100 px-4 py-4">
-                          <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
+                          <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
+                            {/* Links e vídeo */}
                             <div className="flex flex-wrap gap-2">
                               {linksExtras.map((l) => (
                                 <a
@@ -610,51 +692,80 @@ export function ListaRepertorio() {
                                 <button
                                   type="button"
                                   onClick={() => toggleVideo(videoKey)}
-                                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                                  className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                                     videoVisivel
                                       ? 'bg-teal-600 text-white hover:bg-teal-700'
                                       : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
                                   }`}
                                 >
-                                  {videoVisivel ? '✕ Fechar vídeo' : '▶ Vídeo'}
+                                  {videoVisivel ? <X size={13} /> : <Play size={13} />}
+                                  Vídeo
                                 </button>
                               )}
                             </div>
-                            <div className="flex items-center gap-1">
+                            {/* Auto-scroll */}
+                            <div className="flex items-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => toggleScroll(item.key)}
-                                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                                   scrollAtivos.has(item.key)
                                     ? 'bg-dourado-500 text-white hover:bg-dourado-600'
                                     : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
                                 }`}
                               >
-                                {scrollAtivos.has(item.key) ? '⏹ Parar scroll' : '▶ Auto-scroll'}
+                                {scrollAtivos.has(item.key) ? <Square size={13} /> : <Play size={13} />}
+                                Auto-scroll
+                              </button>
+                              <input
+                                type="range"
+                                min={5}
+                                max={120}
+                                value={velocidades[item.key] ?? 30}
+                                onChange={(e) => setVelocidade(item.key, Number(e.target.value))}
+                                className="h-1 w-20 accent-dourado-500"
+                                title="Velocidade do scroll"
+                              />
+                            </div>
+                            {/* Metrônomo */}
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                title="Metrônomo"
+                                onClick={() => toggleMetronomo(item.key)}
+                                className={`rounded-md p-1.5 transition-colors ${
+                                  metronomosAtivos.has(item.key)
+                                    ? 'bg-marinho text-white hover:bg-marinho/80'
+                                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                }`}
+                              >
+                                <Metronome size={15} />
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setVelocidade(item.key, Math.max(40, (velocidades[item.key] ?? 80) - 1))}
+                                onClick={() => setBpm(item.key, Math.max(40, (bpms[item.key] ?? 80) - 1))}
                                 className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                               >−</button>
                               <input
                                 type="number"
                                 min={40}
                                 max={218}
-                                value={velocidades[item.key] ?? 80}
-                                onChange={(e) => setVelocidade(item.key, Math.min(218, Math.max(40, Number(e.target.value))))}
+                                value={bpms[item.key] ?? 80}
+                                onChange={(e) => setBpm(item.key, Math.min(218, Math.max(40, Number(e.target.value))))}
                                 className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
                               />
                               <button
                                 type="button"
-                                onClick={() => setVelocidade(item.key, Math.min(218, (velocidades[item.key] ?? 80) + 1))}
+                                onClick={() => setBpm(item.key, Math.min(218, (bpms[item.key] ?? 80) + 1))}
                                 className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                               >+</button>
                               <span className="flex items-center text-xs text-neutral-400">
                                 BPM
                                 <span
-                                  className={`ml-[10px] inline-block h-5 w-5 rounded-full bg-dourado-500 ${scrollAtivos.has(item.key) ? 'bpm-beat' : 'opacity-40'}`}
-                                  style={{ animationDuration: `${60 / (velocidades[item.key] ?? 80)}s` }}
+                                  className={`ml-[10px] inline-block h-5 w-5 rounded-full bg-dourado-500 transition-opacity ${
+                                    metronomosAtivos.has(item.key) ? 'bpm-beat' : 'opacity-20'
+                                  }`}
+                                  style={metronomosAtivos.has(item.key) ? { animationDuration: `${60 / (bpms[item.key] ?? 80)}s` } : undefined}
                                 />
                               </span>
                             </div>
