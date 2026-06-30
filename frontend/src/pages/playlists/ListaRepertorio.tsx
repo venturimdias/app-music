@@ -57,6 +57,7 @@ export function ListaRepertorio() {
   const [scrollAtivos, setScrollAtivos] = useState<Set<string>>(new Set());
   const [velocidades, setVelocidades] = useState<Record<string, number>>({});
   const preRefs = useRef<Record<string, HTMLPreElement | null>>({});
+  const scrollAccum = useRef(0);
 
   const chave = `repertorio:${slug}`;
 
@@ -97,7 +98,12 @@ export function ListaRepertorio() {
       scrollAtivos.forEach((key) => {
         const pre = preRefs.current[key];
         if (!pre) return;
-        window.scrollBy(0, (velocidades[key] ?? 30) / 60);
+        scrollAccum.current += (velocidades[key] ?? 20) / 60;
+        const pixels = Math.floor(scrollAccum.current);
+        if (pixels > 0) {
+          window.scrollBy(0, pixels);
+          scrollAccum.current -= pixels;
+        }
         const rect = pre.getBoundingClientRect();
         if (rect.bottom <= window.innerHeight + 10) {
           const preTop = pre.getBoundingClientRect().top + window.scrollY - 120;
