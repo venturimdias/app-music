@@ -96,6 +96,16 @@
   background: linear-gradient(180deg, #202040 0%, #161842 100%);
 }
 
+/* Indicador de BPM — círculo que pulsa na batida */
+@keyframes batida {
+  0%   { transform: scale(1.35); opacity: 1; }
+  20%  { transform: scale(1.05); opacity: 0.75; }
+  50%, 100% { transform: scale(1); opacity: 0.45; }
+}
+.bpm-beat {
+  animation: batida ease-out infinite;
+}
+
 /* Acordes destacados na visualização da cifra (ver utils/cifra.ts) */
 .acorde {
   color: var(--color-dourado-500);

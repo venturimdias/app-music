@@ -98,7 +98,7 @@ export function ListaRepertorio() {
       scrollAtivos.forEach((key) => {
         const pre = preRefs.current[key];
         if (!pre) return;
-        scrollAccum.current += (velocidades[key] ?? 20) / 60;
+        scrollAccum.current += ((velocidades[key] ?? 80) * 0.6) / 60;
         const pixels = Math.floor(scrollAccum.current);
         if (pixels > 0) {
           window.scrollBy(0, pixels);
@@ -494,22 +494,29 @@ export function ListaRepertorio() {
                               <div className="flex items-center gap-1">
                                 <button
                                   type="button"
-                                  onClick={() => setVelocidade(item.key, Math.max(5, (velocidades[item.key] ?? 20) - 5))}
+                                  onClick={() => setVelocidade(item.key, Math.max(40, (velocidades[item.key] ?? 80) - 1))}
                                   className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                                 >−</button>
                                 <input
                                   type="number"
-                                  min={5}
-                                  max={300}
-                                  value={velocidades[item.key] ?? 20}
-                                  onChange={(e) => setVelocidade(item.key, Math.min(300, Math.max(5, Number(e.target.value))))}
+                                  min={40}
+                                  max={218}
+                                  value={velocidades[item.key] ?? 80}
+                                  onChange={(e) => setVelocidade(item.key, Math.min(218, Math.max(40, Number(e.target.value))))}
                                   className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => setVelocidade(item.key, Math.min(300, (velocidades[item.key] ?? 20) + 5))}
+                                  onClick={() => setVelocidade(item.key, Math.min(218, (velocidades[item.key] ?? 80) + 1))}
                                   className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                                 >+</button>
+                                <span className="flex items-center text-xs text-neutral-400">
+                                  BPM
+                                  <span
+                                    className={`ml-[10px] inline-block h-5 w-5 rounded-full bg-dourado-500 ${scrollAtivos.has(item.key) ? 'bpm-beat' : 'opacity-40'}`}
+                                    style={{ animationDuration: `${60 / (velocidades[item.key] ?? 80)}s` }}
+                                  />
+                                </span>
                               </div>
                             </div>
 
@@ -642,22 +649,29 @@ export function ListaRepertorio() {
                             <div className="flex items-center gap-1">
                               <button
                                 type="button"
-                                onClick={() => setVelocidade(item.key, Math.max(5, (velocidades[item.key] ?? 20) - 5))}
+                                onClick={() => setVelocidade(item.key, Math.max(40, (velocidades[item.key] ?? 80) - 1))}
                                 className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                               >−</button>
                               <input
                                 type="number"
-                                min={5}
-                                max={300}
-                                value={velocidades[item.key] ?? 20}
-                                onChange={(e) => setVelocidade(item.key, Math.min(300, Math.max(5, Number(e.target.value))))}
+                                min={40}
+                                max={218}
+                                value={velocidades[item.key] ?? 80}
+                                onChange={(e) => setVelocidade(item.key, Math.min(218, Math.max(40, Number(e.target.value))))}
                                 className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
                               />
                               <button
                                 type="button"
-                                onClick={() => setVelocidade(item.key, Math.min(300, (velocidades[item.key] ?? 20) + 5))}
+                                onClick={() => setVelocidade(item.key, Math.min(218, (velocidades[item.key] ?? 80) + 1))}
                                 className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                               >+</button>
+                              <span className="flex items-center text-xs text-neutral-400">
+                                BPM
+                                <span
+                                  className={`ml-[10px] inline-block h-5 w-5 rounded-full bg-dourado-500 ${scrollAtivos.has(item.key) ? 'bpm-beat' : 'opacity-40'}`}
+                                  style={{ animationDuration: `${60 / (velocidades[item.key] ?? 80)}s` }}
+                                />
+                              </span>
                             </div>
                           </div>
 
