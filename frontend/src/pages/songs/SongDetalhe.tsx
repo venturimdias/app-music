@@ -151,7 +151,7 @@ export function SongDetalhe() {
         </div>
 
         <pre
-          className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
+          className="overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800"
           dangerouslySetInnerHTML={{ __html: cifraParaHtml(textoExibido) }}
         />
       </div>

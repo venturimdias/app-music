@@ -410,7 +410,7 @@ export function ListaRepertorio() {
                               );
                             })()}
                             <pre
-                              className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
+                              className="overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800"
                               dangerouslySetInnerHTML={{
                                 __html: (() => {
                                   const raw = item.texto;
@@ -516,7 +516,7 @@ export function ListaRepertorio() {
                           )}
 
                           <pre
-                            className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
+                            className="overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800"
                             dangerouslySetInnerHTML={{ __html: conteudo }}
                           />
                         </div>
