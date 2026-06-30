@@ -488,20 +488,20 @@ export function ListaRepertorio() {
                               <div className="flex items-center gap-1">
                                 <button
                                   type="button"
-                                  onClick={() => setVelocidade(item.key, Math.max(30, (velocidades[item.key] ?? 30) - 5))}
+                                  onClick={() => setVelocidade(item.key, Math.max(5, (velocidades[item.key] ?? 20) - 5))}
                                   className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                                 >−</button>
                                 <input
                                   type="number"
-                                  min={30}
+                                  min={5}
                                   max={300}
-                                  value={velocidades[item.key] ?? 30}
-                                  onChange={(e) => setVelocidade(item.key, Math.min(300, Math.max(30, Number(e.target.value))))}
+                                  value={velocidades[item.key] ?? 20}
+                                  onChange={(e) => setVelocidade(item.key, Math.min(300, Math.max(5, Number(e.target.value))))}
                                   className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => setVelocidade(item.key, Math.min(300, (velocidades[item.key] ?? 30) + 5))}
+                                  onClick={() => setVelocidade(item.key, Math.min(300, (velocidades[item.key] ?? 20) + 5))}
                                   className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                                 >+</button>
                               </div>
@@ -636,20 +636,20 @@ export function ListaRepertorio() {
                             <div className="flex items-center gap-1">
                               <button
                                 type="button"
-                                onClick={() => setVelocidade(item.key, Math.max(30, (velocidades[item.key] ?? 30) - 5))}
+                                onClick={() => setVelocidade(item.key, Math.max(5, (velocidades[item.key] ?? 20) - 5))}
                                 className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                               >−</button>
                               <input
                                 type="number"
-                                min={30}
+                                min={5}
                                 max={300}
-                                value={velocidades[item.key] ?? 30}
-                                onChange={(e) => setVelocidade(item.key, Math.min(300, Math.max(30, Number(e.target.value))))}
+                                value={velocidades[item.key] ?? 20}
+                                onChange={(e) => setVelocidade(item.key, Math.min(300, Math.max(5, Number(e.target.value))))}
                                 className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
                               />
                               <button
                                 type="button"
-                                onClick={() => setVelocidade(item.key, Math.min(300, (velocidades[item.key] ?? 30) + 5))}
+                                onClick={() => setVelocidade(item.key, Math.min(300, (velocidades[item.key] ?? 20) + 5))}
                                 className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                               >+</button>
                             </div>
