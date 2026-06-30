@@ -5,6 +5,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Max,
   Min,
 } from 'class-validator';
 
@@ -26,6 +27,12 @@ export class CreateSongDto {
   @IsOptional()
   @IsString()
   slide?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(40)
+  @Max(218)
+  bpm?: number;
 
   @IsString()
   descricao: string;

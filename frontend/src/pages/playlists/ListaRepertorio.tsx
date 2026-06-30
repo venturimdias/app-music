@@ -743,20 +743,20 @@ export function ListaRepertorio() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setBpm(item.key, Math.max(40, (bpms[item.key] ?? 80) - 1))}
+                                onClick={() => setBpm(item.key, Math.max(40, (bpms[item.key] ?? m.song.bpm ?? 80) - 1))}
                                 className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                               >−</button>
                               <input
                                 type="number"
                                 min={40}
                                 max={218}
-                                value={bpms[item.key] ?? 80}
+                                value={bpms[item.key] ?? m.song.bpm ?? 80}
                                 onChange={(e) => setBpm(item.key, Math.min(218, Math.max(40, Number(e.target.value))))}
                                 className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
                               />
                               <button
                                 type="button"
-                                onClick={() => setBpm(item.key, Math.min(218, (bpms[item.key] ?? 80) + 1))}
+                                onClick={() => setBpm(item.key, Math.min(218, (bpms[item.key] ?? m.song.bpm ?? 80) + 1))}
                                 className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
                               >+</button>
                               <span className="flex items-center text-xs text-neutral-400">
@@ -765,7 +765,7 @@ export function ListaRepertorio() {
                                   className={`ml-[10px] inline-block h-5 w-5 rounded-full bg-dourado-500 transition-opacity ${
                                     metronomosAtivos.has(item.key) ? 'bpm-beat' : 'opacity-20'
                                   }`}
-                                  style={metronomosAtivos.has(item.key) ? { animationDuration: `${60 / (bpms[item.key] ?? 80)}s` } : undefined}
+                                  style={metronomosAtivos.has(item.key) ? { animationDuration: `${60 / (bpms[item.key] ?? m.song.bpm ?? 80)}s` } : undefined}
                                 />
                               </span>
                             </div>

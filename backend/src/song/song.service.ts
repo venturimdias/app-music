@@ -149,6 +149,7 @@ export class SongService implements OnModuleInit {
       cifra: dto.cifra,
       video: dto.video,
       slide: dto.slide,
+      bpm: dto.bpm ?? 80,
       descricao: dto.descricao,
       tituloBusca: buscaTitulo(dto.titulo),
       letraBusca: buscaLetra(dto.descricao),
@@ -166,6 +167,7 @@ export class SongService implements OnModuleInit {
     song.cifra = dto.cifra;
     song.video = dto.video;
     song.slide = dto.slide;
+    song.bpm = dto.bpm ?? 80;
     song.descricao = dto.descricao;
     song.tituloBusca = buscaTitulo(dto.titulo);
     song.letraBusca = buscaLetra(dto.descricao);

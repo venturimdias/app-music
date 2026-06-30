@@ -88,6 +88,7 @@ export function SongForm() {
   const [cifra, setCifra] = useState('');
   const [video, setVideo] = useState('');
   const [slide, setSlide] = useState('');
+  const [bpm, setBpm] = useState<number>(80);
   const [descricao, setDescricao] = useState('');
   const descricaoRef = useRef<HTMLTextAreaElement>(null);
   const [tempoIds, setTempoIds] = useState<number[]>([]);
@@ -127,6 +128,7 @@ export function SongForm() {
         setCifra(s.cifra ?? '');
         setVideo(s.video ?? '');
         setSlide(s.slide ?? '');
+        setBpm(s.bpm ?? 80);
         setDescricao(s.descricao);
         setTempoIds(s.tempos.map((t) => t.id));
         setMomentoIds(s.momentos.map((m) => m.id));
@@ -208,6 +210,7 @@ export function SongForm() {
         cifra: cifra || undefined,
         video: video || undefined,
         slide: slide || undefined,
+        bpm: bpm || undefined,
         descricao,
         tempoIds,
         momentoIds,
@@ -325,6 +328,19 @@ export function SongForm() {
               type="url"
               value={slide}
               onChange={(e) => setSlide(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              BPM (metrônomo)
+            </label>
+            <input
+              type="number"
+              min={40}
+              max={218}
+              value={bpm}
+              onChange={(e) => setBpm(Math.min(218, Math.max(40, Number(e.target.value))))}
               className={inputClass}
             />
           </div>

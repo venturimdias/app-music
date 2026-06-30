@@ -30,6 +30,9 @@ export class Song {
   @Column({ nullable: true })
   slide: string;
 
+  @Column({ default: 80 })
+  bpm: number;
+
   @Column('text')
   descricao: string; // texto puro com acordes em [..]/{{..}}
 

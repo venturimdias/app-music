@@ -53,6 +53,7 @@ export interface Song {
   cifra: string | null;
   video: string | null;
   slide: string | null;
+  bpm: number;
   descricao: string;
   createdAt: string;
   tempos: Tempo[];
