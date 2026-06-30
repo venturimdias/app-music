@@ -98,7 +98,7 @@
 
 /* Acordes destacados na visualização da cifra (ver utils/cifra.ts) */
 .acorde {
-  color: var(--color-teal-600);
+  color: var(--color-dourado-500);
   font-weight: 700;
 }
 
