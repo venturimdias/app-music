@@ -522,7 +522,7 @@ export function ListaRepertorio() {
 
                             <pre
                               ref={(el) => { preRefs.current[item.key] = el; }}
-                              className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800 ${scrollAtivos.has(item.key) ? 'pb-[320px]' : ''}`}
+                              className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800 ${scrollAtivos.has(item.key) ? 'pb-[50vh]' : ''}`}
                               dangerouslySetInnerHTML={{
                                 __html: (() => {
                                   const raw = item.texto;
@@ -695,7 +695,7 @@ export function ListaRepertorio() {
 
                           <pre
                             ref={(el) => { preRefs.current[item.key] = el; }}
-                            className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800 ${scrollAtivos.has(item.key) ? 'pb-[320px]' : ''}`}
+                            className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800 ${scrollAtivos.has(item.key) ? 'pb-[50vh]' : ''}`}
                             dangerouslySetInnerHTML={{ __html: conteudo }}
                           />
                         </div>
