@@ -92,14 +92,12 @@ export function ListaRepertorio() {
 
   useEffect(() => {
     if (scrollAtivos.size === 0) return;
-    const PIXELS_PER_FRAME_BASE = 0.4;
     let frameId: number;
     const tick = () => {
       scrollAtivos.forEach((key) => {
         const pre = preRefs.current[key];
         if (!pre) return;
-        const speed = velocidades[key] ?? 3;
-        window.scrollBy(0, PIXELS_PER_FRAME_BASE * speed);
+        window.scrollBy(0, (velocidades[key] ?? 30) / 60);
         const rect = pre.getBoundingClientRect();
         if (rect.bottom <= window.innerHeight + 10) {
           const preTop = pre.getBoundingClientRect().top + window.scrollY - 120;
@@ -412,7 +410,7 @@ export function ListaRepertorio() {
                   // ── Itens litúrgicos (Salmo / Antífona do Evangelho) ──
                   if (item.tipo !== 'musica') {
                     return (
-                      <li key={item.key} className="overflow-hidden rounded-xl bg-white shadow">
+                      <li key={item.key} className="overflow-clip rounded-xl bg-white shadow">
                         <button
                           onClick={() => alternar(item.key)}
                           className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50"
@@ -475,11 +473,11 @@ export function ListaRepertorio() {
                                 </div>
                               );
                             })()}
-                            <div className="mb-3 flex items-center gap-3">
+                            <div className="sticky top-0 z-10 mb-3 flex items-center gap-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
                               <button
                                 type="button"
                                 onClick={() => toggleScroll(item.key)}
-                                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                                   scrollAtivos.has(item.key)
                                     ? 'bg-dourado-500 text-white hover:bg-dourado-600'
                                     : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
@@ -487,18 +485,26 @@ export function ListaRepertorio() {
                               >
                                 {scrollAtivos.has(item.key) ? '⏹ Parar scroll' : '▶ Auto-scroll'}
                               </button>
-                              <input
-                                type="range"
-                                min={1}
-                                max={10}
-                                value={velocidades[item.key] ?? 3}
-                                onChange={(e) => setVelocidade(item.key, Number(e.target.value))}
-                                className="h-1 w-24 accent-dourado-500"
-                                title="Velocidade do scroll"
-                              />
-                              <span className="text-xs text-neutral-400">
-                                {velocidades[item.key] ?? 3}×
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setVelocidade(item.key, Math.max(5, (velocidades[item.key] ?? 30) - 5))}
+                                  className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
+                                >−</button>
+                                <input
+                                  type="number"
+                                  min={5}
+                                  max={300}
+                                  value={velocidades[item.key] ?? 30}
+                                  onChange={(e) => setVelocidade(item.key, Math.min(300, Math.max(5, Number(e.target.value))))}
+                                  className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setVelocidade(item.key, Math.min(300, (velocidades[item.key] ?? 30) + 5))}
+                                  className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
+                                >+</button>
+                              </div>
                             </div>
 
                             <pre
@@ -547,7 +553,7 @@ export function ListaRepertorio() {
                   const vidId = videoUrl ? youtubeId(videoUrl) : null;
 
                   return (
-                    <li key={item.key} className="overflow-hidden rounded-xl bg-white shadow">
+                    <li key={item.key} className="overflow-clip rounded-xl bg-white shadow">
                       <button
                         onClick={() => alternar(item.key)}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50"
@@ -615,11 +621,11 @@ export function ListaRepertorio() {
                             </div>
                           )}
 
-                          <div className="mb-3 flex items-center gap-3">
+                          <div className="sticky top-0 z-10 mb-3 flex items-center gap-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
                             <button
                               type="button"
                               onClick={() => toggleScroll(item.key)}
-                              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                                 scrollAtivos.has(item.key)
                                   ? 'bg-dourado-500 text-white hover:bg-dourado-600'
                                   : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
@@ -627,18 +633,26 @@ export function ListaRepertorio() {
                             >
                               {scrollAtivos.has(item.key) ? '⏹ Parar scroll' : '▶ Auto-scroll'}
                             </button>
-                            <input
-                              type="range"
-                              min={1}
-                              max={10}
-                              value={velocidades[item.key] ?? 3}
-                              onChange={(e) => setVelocidade(item.key, Number(e.target.value))}
-                              className="h-1 w-24 accent-dourado-500"
-                              title="Velocidade do scroll"
-                            />
-                            <span className="text-xs text-neutral-400">
-                              {velocidades[item.key] ?? 3}×
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setVelocidade(item.key, Math.max(5, (velocidades[item.key] ?? 30) - 5))}
+                                className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
+                              >−</button>
+                              <input
+                                type="number"
+                                min={5}
+                                max={300}
+                                value={velocidades[item.key] ?? 30}
+                                onChange={(e) => setVelocidade(item.key, Math.min(300, Math.max(5, Number(e.target.value))))}
+                                className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setVelocidade(item.key, Math.min(300, (velocidades[item.key] ?? 30) + 5))}
+                                className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
+                              >+</button>
+                            </div>
                           </div>
 
                           {mostrarAcordes && (
