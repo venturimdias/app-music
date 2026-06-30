@@ -402,7 +402,7 @@ export function SongForm() {
           <p className="mb-2 text-sm font-semibold text-neutral-700">
             Visualizar música
           </p>
-          <div className="mb-3 flex flex-wrap gap-1.5">
+          <div className="mb-3 flex flex-wrap gap-1.5 md:flex-nowrap md:overflow-x-auto">
             {TONS.map((t) => (
               <button
                 key={t}
