@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
-import { Metronome, Play, Square, X } from 'lucide-react';
+import { Metronome, Moon, Play, Square, Sun, X } from 'lucide-react';
 import { api } from '../../api/client';
 import { CompartilharEquipe } from '../../components/CompartilharEquipe';
 import { useToast } from '../../components/Toast';
@@ -63,6 +63,40 @@ export function ListaRepertorio() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const preRefs = useRef<Record<string, HTMLPreElement | null>>({});
   const scrollAccum = useRef(0);
+
+  // Modo escuro — persiste no dispositivo
+  const [modoEscuro, setModoEscuro] = useState(() => localStorage.getItem('repertorio-dark') === '1');
+  useEffect(() => { localStorage.setItem('repertorio-dark', modoEscuro ? '1' : '0'); }, [modoEscuro]);
+
+  // Objeto de tema: todas as variações de cor dark/light centralizadas aqui.
+  const th = {
+    page:      modoEscuro ? 'bg-neutral-900'         : 'bg-papel',
+    card:      modoEscuro ? 'bg-neutral-800'         : 'bg-white',
+    cardHover: modoEscuro ? 'hover:bg-neutral-700/40': 'hover:bg-neutral-50',
+    divider:   modoEscuro ? 'border-neutral-700'     : 'border-neutral-100',
+    sticky:    modoEscuro ? 'bg-neutral-900/95'      : 'bg-white/95',
+    tabBar:    modoEscuro ? 'bg-neutral-700'         : 'bg-neutral-200',
+    tabOn:     modoEscuro ? 'bg-neutral-600 font-semibold text-white shadow'        : 'bg-white font-semibold text-marinho shadow',
+    tabOff:    modoEscuro ? 'font-medium text-neutral-400 hover:text-white'         : 'font-medium text-neutral-600 hover:text-marinho',
+    text:      modoEscuro ? 'text-neutral-100' : 'text-neutral-800',
+    textSm:    modoEscuro ? 'text-neutral-300' : 'text-neutral-700',
+    textMuted: modoEscuro ? 'text-neutral-400' : 'text-neutral-600',
+    textFaint: modoEscuro ? 'text-neutral-500' : 'text-neutral-400',
+    btn:       modoEscuro ? 'bg-neutral-700 text-neutral-200 hover:bg-neutral-600' : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300',
+    chip:      modoEscuro ? 'bg-neutral-700 text-neutral-200 hover:bg-neutral-600' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
+    bpmStep:   modoEscuro ? 'rounded px-2 py-0.5 text-base font-bold text-neutral-400 hover:bg-neutral-700' : 'rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100',
+    inputNum:  modoEscuro ? 'w-14 rounded border border-neutral-600 bg-neutral-700 px-1 py-0.5 text-center text-xs text-neutral-200 focus:outline-none' : 'w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none',
+    select:    modoEscuro ? 'rounded-md border border-neutral-600 bg-neutral-700 px-2 py-1 text-xs font-bold text-neutral-200 focus:border-teal-500 focus:outline-none' : 'rounded-md border border-neutral-300 px-2 py-1 text-xs font-bold text-neutral-700 focus:border-teal-500 focus:outline-none',
+    pre:       modoEscuro ? 'text-neutral-200' : 'text-neutral-800',
+    tomBadge:  modoEscuro ? 'bg-teal-900/40 text-teal-300' : 'bg-teal-100 text-teal-700',
+    litBadge:  modoEscuro ? 'bg-amber-900/30 text-amber-300' : 'bg-warning-50 text-warning-700',
+    litCor:    modoEscuro ? 'bg-neutral-700 text-neutral-300' : 'bg-neutral-100 text-neutral-600',
+    litTitulo: modoEscuro ? 'text-teal-400' : 'text-marinho',
+    litTipo:   modoEscuro ? 'text-teal-400' : 'text-teal-700',
+    acordesBtn: modoEscuro
+      ? 'bg-neutral-700 text-neutral-200 shadow hover:bg-neutral-600'
+      : 'bg-white text-neutral-700 shadow hover:bg-neutral-50',
+  };
 
   const chave = `repertorio:${slug}`;
 
@@ -379,7 +413,7 @@ export function ListaRepertorio() {
   ];
 
   return (
-    <div className="min-h-screen bg-papel">
+    <div className={`min-h-screen ${th.page}`}>
       <header className="relative overflow-hidden bg-gradient-celebracao px-4 py-8 text-center">
         <img
           src={simboloBranco}
@@ -387,6 +421,15 @@ export function ListaRepertorio() {
           aria-hidden
           className="pointer-events-none absolute -right-6 -top-6 w-32 opacity-10"
         />
+        {/* Botão dark/light */}
+        <button
+          type="button"
+          title={modoEscuro ? 'Modo claro' : 'Modo escuro'}
+          onClick={() => setModoEscuro((v) => !v)}
+          className="absolute right-3 top-3 rounded-full p-1.5 text-white/70 transition-colors hover:bg-white/15 hover:text-white"
+        >
+          {modoEscuro ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         <img src={simboloBranco} alt="" aria-hidden className="mx-auto mb-2 h-8 w-auto opacity-90" />
         <h1 className="text-xl font-display font-bold text-white">{playlist.nome}</h1>
         <p className="mt-1 text-sm text-white/70">
@@ -397,16 +440,14 @@ export function ListaRepertorio() {
 
       <main className="mx-auto max-w-3xl px-4 py-6">
         {/* Abas */}
-        <div className="mb-5 flex gap-1 rounded-lg bg-neutral-200 p-1">
+        <div className={`mb-5 flex gap-1 rounded-lg p-1 ${th.tabBar}`}>
           {abas.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setAba(t.id)}
               className={`flex-1 rounded-md px-3 py-2 font-display text-sm transition-colors ${
-                aba === t.id
-                  ? 'bg-white font-semibold text-marinho shadow'
-                  : 'font-medium text-neutral-600 hover:text-marinho'
+                aba === t.id ? th.tabOn : th.tabOff
               }`}
             >
               {t.label}
@@ -428,7 +469,7 @@ export function ListaRepertorio() {
                 onClick={() => setMostrarAcordes((v) => !v)}
                 className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   mostrarAcordes
-                    ? 'bg-white text-neutral-700 shadow hover:bg-neutral-50'
+                    ? th.acordesBtn
                     : 'bg-teal-600 text-white hover:bg-teal-700'
                 }`}
               >
@@ -436,7 +477,7 @@ export function ListaRepertorio() {
               </button>
 
               <div className="flex items-center gap-2">
-                <span className="text-sm text-neutral-600">
+                <span className={`text-sm ${th.textMuted}`}>
                   Salvar offline neste dispositivo
                 </span>
                 <button
@@ -458,7 +499,7 @@ export function ListaRepertorio() {
             </div>
 
             {itens.length === 0 ? (
-              <p className="py-10 text-center text-neutral-400">
+              <p className={`py-10 text-center ${th.textFaint}`}>
                 Esta playlist ainda não tem itens.
               </p>
             ) : (
@@ -469,27 +510,27 @@ export function ListaRepertorio() {
                   // ── Itens litúrgicos (Salmo / Antífona do Evangelho) ──
                   if (item.tipo !== 'musica') {
                     return (
-                      <li key={item.key} className="overflow-clip rounded-xl bg-white shadow">
+                      <li key={item.key} className={`overflow-clip rounded-xl shadow ${th.card}`}>
                         <button
                           onClick={() => alternar(item.key)}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50"
+                          className={`flex w-full items-center gap-3 px-4 py-3 text-left ${th.cardHover}`}
                         >
-                          <span className="w-6 text-right text-sm font-bold text-neutral-400">
+                          <span className={`w-6 text-right text-sm font-bold ${th.textFaint}`}>
                             {idx + 1}.
                           </span>
-                          <span className="font-medium text-neutral-800">
+                          <span className={`font-medium ${th.text}`}>
                             {item.tipo === 'salmo' ? 'Salmo responsorial' : 'Antífona do Evangelho'}
                           </span>
-                          <span className="rounded-full bg-warning-50 px-2 py-0.5 text-xs font-bold text-warning-700">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${th.litBadge}`}>
                             Liturgia
                           </span>
-                          <span className="ml-auto text-neutral-400">
+                          <span className={`ml-auto ${th.textFaint}`}>
                             {aberta ? '▲' : '▼'}
                           </span>
                         </button>
 
                         {aberta && (
-                          <div className="border-t border-neutral-100 px-4 py-4">
+                          <div className={`border-t px-4 py-4 ${th.divider}`}>
                             {item.tipo === 'salmo' && mostrarAcordes && (() => {
                               const tomDetectado = detectarTom(item.texto);
                               const valorBase = tomSalmoBase ?? tomDetectado ?? '';
@@ -505,7 +546,7 @@ export function ListaRepertorio() {
                                           className={`min-w-9 rounded-md px-2 py-1 text-xs font-bold transition-colors ${
                                             (tomSalmoAtivo ?? valorBase) === t
                                               ? 'bg-teal-600 text-white'
-                                              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                                              : th.chip
                                           }`}
                                         >
                                           {t}
@@ -514,14 +555,14 @@ export function ListaRepertorio() {
                                     </div>
                                   )}
                                   <div className="flex items-center gap-2">
-                                    <label className="text-xs text-neutral-400">Tom original:</label>
+                                    <label className={`text-xs ${th.textFaint}`}>Tom original:</label>
                                     <select
                                       value={valorBase}
                                       onChange={(e) => {
                                         setTomSalmoBase(e.target.value);
                                         setTomSalmoAtivo(e.target.value);
                                       }}
-                                      className="rounded-md border border-neutral-300 px-2 py-1 text-xs font-bold text-neutral-700 focus:border-teal-500 focus:outline-none"
+                                      className={th.select}
                                     >
                                       {!valorBase && <option value="">—</option>}
                                       {TONS.map((t) => (
@@ -532,7 +573,7 @@ export function ListaRepertorio() {
                                 </div>
                               );
                             })()}
-                            <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
+                            <div className={`sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg px-3 py-2 shadow-sm backdrop-blur-sm ${th.sticky}`}>
                               {/* Auto-scroll */}
                               <div className="flex items-center gap-2">
                                 <button
@@ -541,7 +582,7 @@ export function ListaRepertorio() {
                                   className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                                     scrollAtivos.has(item.key)
                                       ? 'bg-dourado-500 text-white hover:bg-dourado-600'
-                                      : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                      : th.btn
                                   }`}
                                 >
                                   {scrollAtivos.has(item.key) ? <Square size={13} /> : <Play size={13} />}
@@ -566,30 +607,22 @@ export function ListaRepertorio() {
                                   className={`rounded-md p-1.5 transition-colors ${
                                     metronomosAtivos.has(item.key)
                                       ? 'bg-marinho text-white hover:bg-marinho/80'
-                                      : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                      : th.btn
                                   }`}
                                 >
                                   <Metronome size={15} />
                                 </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setBpm(item.key, Math.max(40, (bpms[item.key] ?? 80) - 1))}
-                                  className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
-                                >−</button>
+                                <button type="button" onClick={() => setBpm(item.key, Math.max(40, (bpms[item.key] ?? 80) - 1))} className={th.bpmStep}>−</button>
                                 <input
                                   type="number"
                                   min={40}
                                   max={218}
                                   value={bpms[item.key] ?? 80}
                                   onChange={(e) => setBpm(item.key, Math.min(218, Math.max(40, Number(e.target.value))))}
-                                  className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
+                                  className={th.inputNum}
                                 />
-                                <button
-                                  type="button"
-                                  onClick={() => setBpm(item.key, Math.min(218, (bpms[item.key] ?? 80) + 1))}
-                                  className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
-                                >+</button>
-                                <span className="flex items-center text-xs text-neutral-400">
+                                <button type="button" onClick={() => setBpm(item.key, Math.min(218, (bpms[item.key] ?? 80) + 1))} className={th.bpmStep}>+</button>
+                                <span className={`flex items-center text-xs ${th.textFaint}`}>
                                   BPM
                                   <span
                                     className={`ml-[10px] inline-block h-5 w-5 rounded-full bg-dourado-500 transition-opacity ${
@@ -603,7 +636,7 @@ export function ListaRepertorio() {
 
                             <pre
                               ref={(el) => { preRefs.current[item.key] = el; }}
-                              className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800 ${scrollAtivos.has(item.key) ? 'pb-[50vh]' : ''}`}
+                              className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 ${th.pre} ${scrollAtivos.has(item.key) ? 'pb-[50vh]' : ''}`}
                               dangerouslySetInnerHTML={{
                                 __html: (() => {
                                   const raw = item.texto;
@@ -647,34 +680,34 @@ export function ListaRepertorio() {
                   const vidId = videoUrl ? youtubeId(videoUrl) : null;
 
                   return (
-                    <li key={item.key} className="overflow-clip rounded-xl bg-white shadow">
+                    <li key={item.key} className={`overflow-clip rounded-xl shadow ${th.card}`}>
                       <button
                         onClick={() => alternar(item.key)}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50"
+                        className={`flex w-full items-center gap-3 px-4 py-3 text-left ${th.cardHover}`}
                       >
-                        <span className="w-6 text-right text-sm font-bold text-neutral-400">
+                        <span className={`w-6 text-right text-sm font-bold ${th.textFaint}`}>
                           {idx + 1}.
                         </span>
-                        <span className="flex flex-col items-center rounded-md bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700 leading-tight">
+                        <span className={`flex flex-col items-center rounded-md px-2 py-0.5 text-xs font-bold leading-tight ${th.tomBadge}`}>
                           <span className="hidden sm:block">Tom</span>
                           <span>{tomAtivo}</span>
                         </span>
                         <span className="flex min-w-0 flex-col">
-                          <span className="font-medium text-neutral-800">
+                          <span className={`font-medium ${th.text}`}>
                             {m.song.titulo}
                           </span>
                           {momentoStr && (
-                            <span className="text-xs text-neutral-400">{momentoStr}</span>
+                            <span className={`text-xs ${th.textFaint}`}>{momentoStr}</span>
                           )}
                         </span>
-                        <span className="ml-auto text-neutral-400">
+                        <span className={`ml-auto ${th.textFaint}`}>
                           {aberta ? '▲' : '▼'}
                         </span>
                       </button>
 
                       {aberta && (
-                        <div className="border-t border-neutral-100 px-4 py-4">
-                          <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
+                        <div className={`border-t px-4 py-4 ${th.divider}`}>
+                          <div className={`sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg px-3 py-2 shadow-sm backdrop-blur-sm ${th.sticky}`}>
                             {/* Links e vídeo */}
                             <div className="flex flex-wrap gap-2">
                               {linksExtras.map((l) => (
@@ -683,7 +716,7 @@ export function ListaRepertorio() {
                                   href={l.url!}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="rounded-md bg-neutral-200 px-3 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-300"
+                                  className={`rounded-md px-3 py-1 text-xs font-medium ${th.btn}`}
                                 >
                                   {l.rotulo}
                                 </a>
@@ -695,7 +728,7 @@ export function ListaRepertorio() {
                                   className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                                     videoVisivel
                                       ? 'bg-teal-600 text-white hover:bg-teal-700'
-                                      : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                      : th.btn
                                   }`}
                                 >
                                   {videoVisivel ? <X size={13} /> : <Play size={13} />}
@@ -711,7 +744,7 @@ export function ListaRepertorio() {
                                 className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                                   scrollAtivos.has(item.key)
                                     ? 'bg-dourado-500 text-white hover:bg-dourado-600'
-                                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                    : th.btn
                                 }`}
                               >
                                 {scrollAtivos.has(item.key) ? <Square size={13} /> : <Play size={13} />}
@@ -736,30 +769,22 @@ export function ListaRepertorio() {
                                 className={`rounded-md p-1.5 transition-colors ${
                                   metronomosAtivos.has(item.key)
                                     ? 'bg-marinho text-white hover:bg-marinho/80'
-                                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                    : th.btn
                                 }`}
                               >
                                 <Metronome size={15} />
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => setBpm(item.key, Math.max(40, (bpms[item.key] ?? m.song.bpm ?? 80) - 1))}
-                                className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
-                              >−</button>
+                              <button type="button" onClick={() => setBpm(item.key, Math.max(40, (bpms[item.key] ?? m.song.bpm ?? 80) - 1))} className={th.bpmStep}>−</button>
                               <input
                                 type="number"
                                 min={40}
                                 max={218}
                                 value={bpms[item.key] ?? m.song.bpm ?? 80}
                                 onChange={(e) => setBpm(item.key, Math.min(218, Math.max(40, Number(e.target.value))))}
-                                className="w-14 rounded border border-neutral-200 px-1 py-0.5 text-center text-xs text-neutral-700 focus:outline-none"
+                                className={th.inputNum}
                               />
-                              <button
-                                type="button"
-                                onClick={() => setBpm(item.key, Math.min(218, (bpms[item.key] ?? m.song.bpm ?? 80) + 1))}
-                                className="rounded px-2 py-0.5 text-base font-bold text-neutral-500 hover:bg-neutral-100"
-                              >+</button>
-                              <span className="flex items-center text-xs text-neutral-400">
+                              <button type="button" onClick={() => setBpm(item.key, Math.min(218, (bpms[item.key] ?? m.song.bpm ?? 80) + 1))} className={th.bpmStep}>+</button>
+                              <span className={`flex items-center text-xs ${th.textFaint}`}>
                                 BPM
                                 <span
                                   className={`ml-[10px] inline-block h-5 w-5 rounded-full bg-dourado-500 transition-opacity ${
@@ -795,7 +820,7 @@ export function ListaRepertorio() {
                                   className={`min-w-9 rounded-md px-2 py-1 text-xs font-bold transition-colors ${
                                     tomAtivo === t
                                       ? 'bg-teal-600 text-white'
-                                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                                      : th.chip
                                   }`}
                                 >
                                   {t}
@@ -806,7 +831,7 @@ export function ListaRepertorio() {
 
                           <pre
                             ref={(el) => { preRefs.current[item.key] = el; }}
-                            className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800 ${scrollAtivos.has(item.key) ? 'pb-[50vh]' : ''}`}
+                            className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 ${th.pre} ${scrollAtivos.has(item.key) ? 'pb-[50vh]' : ''}`}
                             dangerouslySetInnerHTML={{ __html: conteudo }}
                           />
                         </div>
@@ -823,9 +848,9 @@ export function ListaRepertorio() {
         {aba === 'liturgia' && (
           <div>
             {carregandoLiturgia || liturgia === undefined ? (
-              <p className="py-10 text-center text-neutral-400">Carregando liturgia…</p>
+              <p className={`py-10 text-center ${th.textFaint}`}>Carregando liturgia…</p>
             ) : liturgia === null ? (
-              <p className="py-10 text-center text-neutral-400">
+              <p className={`py-10 text-center ${th.textFaint}`}>
                 Liturgia indisponível no momento.{' '}
                 <button
                   type="button"
@@ -836,13 +861,13 @@ export function ListaRepertorio() {
                 </button>
               </p>
             ) : (
-              <div className="rounded-xl bg-white p-5 shadow">
-                <div className="mb-4 border-b border-neutral-100 pb-3">
-                  <h2 className="text-lg font-display font-bold text-marinho">{liturgia.titulo}</h2>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
+              <div className={`rounded-xl p-5 shadow ${th.card}`}>
+                <div className={`mb-4 border-b pb-3 ${th.divider}`}>
+                  <h2 className={`text-lg font-display font-bold ${th.litTitulo}`}>{liturgia.titulo}</h2>
+                  <div className={`mt-1 flex flex-wrap items-center gap-2 text-sm ${th.textMuted}`}>
                     <span>{formatarData(playlist.data)}</span>
                     {liturgia.cor && (
-                      <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${th.litCor}`}>
                         {liturgia.cor}
                       </span>
                     )}
@@ -852,28 +877,28 @@ export function ListaRepertorio() {
                 <div className="space-y-5">
                   {liturgia.leituras.map((l, i) => (
                     <div key={i}>
-                      <p className="text-xs font-bold uppercase tracking-wide text-teal-700">
+                      <p className={`text-xs font-bold uppercase tracking-wide ${th.litTipo}`}>
                         {l.tipo}
                       </p>
                       {l.referencia && (
-                        <p className="text-sm font-medium text-neutral-600">{l.referencia}</p>
+                        <p className={`text-sm font-medium ${th.textMuted}`}>{l.referencia}</p>
                       )}
                       {l.titulo && (
-                        <p className="text-sm italic text-neutral-500">{l.titulo}</p>
+                        <p className={`text-sm italic ${th.textFaint}`}>{l.titulo}</p>
                       )}
                       {l.refrao && (
-                        <p className="mt-1 text-sm font-semibold text-neutral-700">
+                        <p className={`mt-1 text-sm font-semibold ${th.textSm}`}>
                           R. {l.refrao}
                         </p>
                       )}
-                      <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-neutral-700">
+                      <p className={`mt-1 whitespace-pre-wrap text-sm leading-7 ${th.textSm}`}>
                         {l.texto}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                <p className="mt-5 border-t border-neutral-100 pt-3 text-xs text-neutral-400">
+                <p className={`mt-5 border-t pt-3 text-xs ${th.textFaint} ${th.divider}`}>
                   Fonte: {liturgia.fonte}
                 </p>
               </div>
