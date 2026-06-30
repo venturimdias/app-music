@@ -522,7 +522,7 @@ export function ListaRepertorio() {
 
                             <pre
                               ref={(el) => { preRefs.current[item.key] = el; }}
-                              className="overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800"
+                              className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800 ${scrollAtivos.has(item.key) ? 'pb-[320px]' : ''}`}
                               dangerouslySetInnerHTML={{
                                 __html: (() => {
                                   const raw = item.texto;
@@ -593,8 +593,8 @@ export function ListaRepertorio() {
 
                       {aberta && (
                         <div className="border-t border-neutral-100 px-4 py-4">
-                          {(linksExtras.length > 0 || videoUrl) && (
-                            <div className="mb-3 flex flex-wrap gap-2">
+                          <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
+                            <div className="flex flex-wrap gap-2">
                               {linksExtras.map((l) => (
                                 <a
                                   key={l.rotulo}
@@ -620,33 +620,18 @@ export function ListaRepertorio() {
                                 </button>
                               )}
                             </div>
-                          )}
-
-                          {videoVisivel && vidId && (
-                            <div className="mb-3 aspect-video w-full overflow-hidden rounded-lg">
-                              <iframe
-                                src={`https://www.youtube.com/embed/${vidId}`}
-                                title="Vídeo"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                className="h-full w-full"
-                              />
-                            </div>
-                          )}
-
-                          <div className="sticky top-0 z-10 mb-3 flex items-center gap-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
-                            <button
-                              type="button"
-                              onClick={() => toggleScroll(item.key)}
-                              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                                scrollAtivos.has(item.key)
-                                  ? 'bg-dourado-500 text-white hover:bg-dourado-600'
-                                  : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-                              }`}
-                            >
-                              {scrollAtivos.has(item.key) ? '⏹ Parar scroll' : '▶ Auto-scroll'}
-                            </button>
                             <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => toggleScroll(item.key)}
+                                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                                  scrollAtivos.has(item.key)
+                                    ? 'bg-dourado-500 text-white hover:bg-dourado-600'
+                                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                                }`}
+                              >
+                                {scrollAtivos.has(item.key) ? '⏹ Parar scroll' : '▶ Auto-scroll'}
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => setVelocidade(item.key, Math.max(40, (velocidades[item.key] ?? 80) - 1))}
@@ -675,6 +660,18 @@ export function ListaRepertorio() {
                             </div>
                           </div>
 
+                          {videoVisivel && vidId && (
+                            <div className="mb-3 aspect-video w-full overflow-hidden rounded-lg">
+                              <iframe
+                                src={`https://www.youtube.com/embed/${vidId}`}
+                                title="Vídeo"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="h-full w-full"
+                              />
+                            </div>
+                          )}
+
                           {mostrarAcordes && (
                             <div className="mb-3 flex flex-wrap gap-1">
                               {TONS.map((t) => (
@@ -698,7 +695,7 @@ export function ListaRepertorio() {
 
                           <pre
                             ref={(el) => { preRefs.current[item.key] = el; }}
-                            className="overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800"
+                            className={`overflow-x-auto whitespace-pre-wrap font-mono text-base leading-7 text-neutral-800 ${scrollAtivos.has(item.key) ? 'pb-[320px]' : ''}`}
                             dangerouslySetInnerHTML={{ __html: conteudo }}
                           />
                         </div>
