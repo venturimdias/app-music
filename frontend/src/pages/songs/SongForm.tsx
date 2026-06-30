@@ -269,80 +269,87 @@ export function SongForm() {
 
       {/* Dados da música */}
       <div className="mb-6 rounded-xl bg-white p-6 shadow">
-        <div className="mb-4 grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Título *
-            </label>
-            <input
-              required
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              className={inputClass}
-            />
+        <div className="mb-4 flex flex-col gap-4">
+          {/* Linha 1: Título · Tom · BPM */}
+          <div className="grid grid-cols-[1fr_auto_auto] gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">
+                Título *
+              </label>
+              <input
+                required
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div className="w-28">
+              <label className="mb-1 block text-sm font-medium text-neutral-700">
+                Tom original *
+              </label>
+              <select
+                required
+                value={tom}
+                onChange={(e) => setTom(e.target.value)}
+                className={inputClass}
+              >
+                {TONS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-28">
+              <label className="mb-1 block text-sm font-medium text-neutral-700">
+                BPM
+              </label>
+              <input
+                type="number"
+                min={40}
+                max={218}
+                value={bpm}
+                onChange={(e) => setBpm(Math.min(218, Math.max(40, Number(e.target.value))))}
+                className={inputClass}
+              />
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Tom original *
-            </label>
-            <select
-              required
-              value={tom}
-              onChange={(e) => setTom(e.target.value)}
-              className={inputClass}
-            >
-              {TONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Cifra (URL da cifra original)
-            </label>
-            <input
-              type="url"
-              value={cifra}
-              onChange={(e) => setCifra(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Vídeo
-            </label>
-            <input
-              type="url"
-              value={video}
-              onChange={(e) => setVideo(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Slide
-            </label>
-            <input
-              type="url"
-              value={slide}
-              onChange={(e) => setSlide(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">
-              BPM (metrônomo)
-            </label>
-            <input
-              type="number"
-              min={40}
-              max={218}
-              value={bpm}
-              onChange={(e) => setBpm(Math.min(218, Math.max(40, Number(e.target.value))))}
-              className={inputClass}
-            />
+
+          {/* Linha 2: Cifra · Vídeo · Slide */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">
+                Cifra (URL)
+              </label>
+              <input
+                type="url"
+                value={cifra}
+                onChange={(e) => setCifra(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">
+                Vídeo
+              </label>
+              <input
+                type="url"
+                value={video}
+                onChange={(e) => setVideo(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">
+                Slide
+              </label>
+              <input
+                type="url"
+                value={slide}
+                onChange={(e) => setSlide(e.target.value)}
+                className={inputClass}
+              />
+            </div>
           </div>
         </div>
 
