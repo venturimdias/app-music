@@ -1,5 +1,23 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical } from 'lucide-react';
 import { api } from '../../api/client';
 import { CompartilharEquipe } from '../../components/CompartilharEquipe';
 import { Modal } from '../../components/Modal';
@@ -19,6 +37,12 @@ export function PlaylistDetalhe() {
   const { toast } = useToast();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [mexendo, setMexendo] = useState(false);
+  // Ordem otimista (chaves dos itens) aplicada logo após soltar o item
+  // arrastado, antes da confirmação do backend — evita o "salto" visual
+  // de esperar o GET recarregar a playlist.
+  const [ordemOtimista, setOrdemOtimista] = useState<string[] | null>(null);
+  // Salmo e Antífona começam minimizados (só o cabeçalho aparece).
+  const [fechadas, setFechadas] = useState<Set<string>>(() => new Set(['salmo', 'antifona']));
 
   // modal de edição (nome/data/descricao + itens litúrgicos)
   const [modalAberto, setModalAberto] = useState(false);
@@ -28,6 +52,11 @@ export function PlaylistDetalhe() {
   const [salmo, setSalmo] = useState('');
   const [antifonaEvangelho, setAntifonaEvangelho] = useState('');
   const [mostrarAcordes, setMostrarAcordes] = useState(true);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   async function carregar() {
     const resPlaylist = await api.get<Playlist>(`/playlists/${id}`);
@@ -71,6 +100,15 @@ export function PlaylistDetalhe() {
   }
   itens.sort((a, b) => a.ordem - b.ordem);
 
+  // Enquanto uma reordenação está em voo, exibe a ordem otimista em vez da
+  // ordem vinda do servidor (que só chega depois do `carregar()`).
+  const itensPorKey = new Map(itens.map((it) => [it.key, it]));
+  const itensExibidos = ordemOtimista
+    ? ordemOtimista
+        .map((k) => itensPorKey.get(k))
+        .filter((it): it is ItemRepertorio => Boolean(it))
+    : itens;
+
   async function remover(songId: number, titulo: string) {
     if (!window.confirm(`Remover "${titulo}" da playlist?`)) return;
     setMexendo(true);
@@ -82,13 +120,17 @@ export function PlaylistDetalhe() {
     }
   }
 
-  // Reordena a lista inteira (músicas + itens litúrgicos) trocando o item
-  // com o vizinho e enviando a nova sequência ao backend.
-  async function mover(idx: number, dir: -1 | 1) {
-    const destino = idx + dir;
-    if (destino < 0 || destino >= itens.length) return;
-    const novo = [...itens];
-    [novo[idx], novo[destino]] = [novo[destino], novo[idx]];
+  // Reordena a lista inteira (músicas + itens litúrgicos) a partir do
+  // drag-and-drop, enviando a nova sequência completa ao backend.
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = itens.findIndex((i) => i.key === active.id);
+    const newIndex = itens.findIndex((i) => i.key === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const novo = arrayMove(itens, oldIndex, newIndex);
+    setOrdemOtimista(novo.map((i) => i.key));
     setMexendo(true);
     try {
       await api.put(`/playlists/${id}/reordenar`, {
@@ -99,9 +141,24 @@ export function PlaylistDetalhe() {
         ),
       });
       await carregar();
+    } catch {
+      // erro já em toast pelo interceptor
     } finally {
+      setOrdemOtimista(null);
       setMexendo(false);
     }
+  }
+
+  function alternar(key: string) {
+    setFechadas((prev) => {
+      const novo = new Set(prev);
+      if (novo.has(key)) {
+        novo.delete(key);
+      } else {
+        novo.add(key);
+      }
+      return novo;
+    });
   }
 
   // Remove um item litúrgico = limpa o campo correspondente na playlist.
@@ -209,82 +266,28 @@ export function PlaylistDetalhe() {
             .
           </p>
         ) : (
-          <ul className="divide-y divide-neutral-100">
-            {itens.map((item, idx) => (
-              <li key={item.key} className="flex items-start gap-3 px-4 py-3">
-                <span className="w-6 pt-0.5 text-right text-sm font-bold text-neutral-400">
-                  {idx + 1}.
-                </span>
-                <div className="flex flex-col pt-0.5">
-                  <button
-                    onClick={() => mover(idx, -1)}
-                    disabled={idx === 0 || mexendo}
-                    className="text-xs text-neutral-400 hover:text-teal-600 disabled:opacity-20"
-                    aria-label="Subir"
-                  >
-                    ▲
-                  </button>
-                  <button
-                    onClick={() => mover(idx, 1)}
-                    disabled={idx === itens.length - 1 || mexendo}
-                    className="text-xs text-neutral-400 hover:text-teal-600 disabled:opacity-20"
-                    aria-label="Descer"
-                  >
-                    ▼
-                  </button>
-                </div>
-
-                {item.tipo === 'musica' ? (
-                  <>
-                    <Link
-                      to={`/songs/${item.musica.song.id}`}
-                      className="font-medium text-teal-700 hover:underline"
-                    >
-                      {item.musica.song.titulo}
-                    </Link>
-                    <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">
-                      {item.musica.tom}
-                    </span>
-                    {item.musica.tom !== item.musica.song.tom && (
-                      <span className="text-xs text-neutral-400">
-                        (original: {item.musica.song.tom})
-                      </span>
-                    )}
-                    <button
-                      onClick={() => remover(item.musica.song.id, item.musica.song.titulo)}
-                      disabled={mexendo}
-                      className="ml-auto rounded-md px-3 py-1 text-sm text-danger-600 hover:bg-danger-50 disabled:opacity-50"
-                    >
-                      Remover
-                    </button>
-                  </>
-                ) : (
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="rounded-full bg-warning-50 px-2 py-0.5 text-xs font-bold text-warning-700">
-                        {item.tipo === 'salmo' ? 'Salmo' : 'Antífona do Evangelho'}
-                      </span>
-                      <button
-                        onClick={() => removerLiturgico(item.tipo)}
-                        disabled={mexendo}
-                        className="ml-auto rounded-md px-3 py-1 text-sm text-danger-600 hover:bg-danger-50 disabled:opacity-50"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                    <pre
-                      className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
-                      dangerouslySetInnerHTML={{
-                        __html: mostrarAcordes
-                          ? cifraParaHtml(item.texto)
-                          : soLetra(item.texto),
-                      }}
-                    />
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext
+              items={itensExibidos.map((item) => item.key)}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="divide-y divide-neutral-100">
+                {itensExibidos.map((item, idx) => (
+                  <ItemRepertorioRow
+                    key={item.key}
+                    item={item}
+                    idx={idx}
+                    mostrarAcordes={mostrarAcordes}
+                    mexendo={mexendo}
+                    aberta={!fechadas.has(item.key)}
+                    onAlternar={() => alternar(item.key)}
+                    onRemover={remover}
+                    onRemoverLiturgico={removerLiturgico}
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
@@ -363,5 +366,125 @@ export function PlaylistDetalhe() {
         </form>
       </Modal>
     </div>
+  );
+}
+
+// Uma linha do repertório (música ou item litúrgico), arrastável pelo
+// ícone de "grip". `useSortable` precisa rodar uma vez por item, por isso
+// vira um componente à parte em vez de ficar inline no `.map()`.
+function ItemRepertorioRow({
+  item,
+  idx,
+  mostrarAcordes,
+  mexendo,
+  aberta,
+  onAlternar,
+  onRemover,
+  onRemoverLiturgico,
+}: {
+  item: ItemRepertorio;
+  idx: number;
+  mostrarAcordes: boolean;
+  mexendo: boolean;
+  aberta: boolean;
+  onAlternar: () => void;
+  onRemover: (songId: number, titulo: string) => void;
+  onRemoverLiturgico: (tipo: 'salmo' | 'antifona') => void;
+}) {
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.key,
+    disabled: mexendo,
+    transition: prefersReducedMotion ? null : { duration: 250, easing: 'cubic-bezier(0.4,0,0.2,1)' },
+  });
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <li ref={setNodeRef} style={style} className="flex items-start gap-3 px-4 py-3">
+      <span className="w-6 pt-0.5 text-right text-sm font-bold text-neutral-400">
+        {idx + 1}.
+      </span>
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        disabled={mexendo}
+        aria-label="Arrastar para reordenar"
+        className="touch-none cursor-grab pt-1 text-neutral-300 hover:text-teal-600 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30"
+      >
+        <GripVertical size={18} />
+      </button>
+
+      {item.tipo === 'musica' ? (
+        <>
+          <div className="flex min-w-0 flex-col">
+            <Link
+              to={`/songs/${item.musica.song.id}`}
+              className="font-medium text-teal-700 hover:underline"
+            >
+              {item.musica.song.titulo}
+            </Link>
+            {item.musica.song.momentos.length > 0 && (
+              <span className="text-xs text-neutral-400">
+                {item.musica.song.momentos.map((m) => m.titulo).join(', ')}
+              </span>
+            )}
+          </div>
+          <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">
+            {item.musica.tom}
+          </span>
+          {item.musica.tom !== item.musica.song.tom && (
+            <span className="text-xs text-neutral-400">
+              (original: {item.musica.song.tom})
+            </span>
+          )}
+          <button
+            onClick={() => onRemover(item.musica.song.id, item.musica.song.titulo)}
+            disabled={mexendo}
+            className="ml-auto rounded-md px-3 py-1 text-sm text-danger-600 hover:bg-danger-50 disabled:opacity-50"
+          >
+            Remover
+          </button>
+        </>
+      ) : (
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onAlternar}
+              className="flex items-center gap-2 text-left"
+            >
+              <span className="rounded-full bg-warning-50 px-2 py-0.5 text-xs font-bold text-warning-700">
+                {item.tipo === 'salmo' ? 'Salmo' : 'Antífona do Evangelho'}
+              </span>
+              <span className="text-xs text-neutral-400">{aberta ? '▲' : '▼'}</span>
+            </button>
+            <button
+              onClick={() => onRemoverLiturgico(item.tipo)}
+              disabled={mexendo}
+              className="ml-auto rounded-md px-3 py-1 text-sm text-danger-600 hover:bg-danger-50 disabled:opacity-50"
+            >
+              Remover
+            </button>
+          </div>
+          {aberta && (
+            <pre
+              className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-neutral-800"
+              dangerouslySetInnerHTML={{
+                __html: mostrarAcordes ? cifraParaHtml(item.texto) : soLetra(item.texto),
+              }}
+            />
+          )}
+        </div>
+      )}
+    </li>
   );
 }
