@@ -37,10 +37,13 @@ export function PlaylistDetalhe() {
   const { toast } = useToast();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [mexendo, setMexendo] = useState(false);
-  // Ordem otimista (chaves dos itens) aplicada logo após soltar o item
-  // arrastado, antes da confirmação do backend — evita o "salto" visual
-  // de esperar o GET recarregar a playlist.
-  const [ordemOtimista, setOrdemOtimista] = useState<string[] | null>(null);
+  // Modo de edição da ordenação: o drag-and-drop só reordena localmente
+  // (sem chamar a API a cada solta); "Salvar ordenação" envia tudo de uma vez.
+  const [modoOrdenacao, setModoOrdenacao] = useState(false);
+  const [salvandoOrdenacao, setSalvandoOrdenacao] = useState(false);
+  // Ordem pendente (chaves dos itens) enquanto o modo de edição está ativo —
+  // só é enviada ao backend quando o usuário clica em "Salvar ordenação".
+  const [ordemPendente, setOrdemPendente] = useState<string[] | null>(null);
   // Salmo e Antífona começam minimizados (só o cabeçalho aparece).
   const [fechadas, setFechadas] = useState<Set<string>>(() => new Set(['salmo', 'antifona']));
 
@@ -100,11 +103,11 @@ export function PlaylistDetalhe() {
   }
   itens.sort((a, b) => a.ordem - b.ordem);
 
-  // Enquanto uma reordenação está em voo, exibe a ordem otimista em vez da
-  // ordem vinda do servidor (que só chega depois do `carregar()`).
+  // Enquanto o modo de edição está ativo e o usuário já arrastou algum item,
+  // exibe a ordem pendente (ainda não salva) em vez da ordem do servidor.
   const itensPorKey = new Map(itens.map((it) => [it.key, it]));
-  const itensExibidos = ordemOtimista
-    ? ordemOtimista
+  const itensExibidos = ordemPendente
+    ? ordemPendente
         .map((k) => itensPorKey.get(k))
         .filter((it): it is ItemRepertorio => Boolean(it))
     : itens;
@@ -120,18 +123,30 @@ export function PlaylistDetalhe() {
     }
   }
 
-  // Reordena a lista inteira (músicas + itens litúrgicos) a partir do
-  // drag-and-drop, enviando a nova sequência completa ao backend.
-  async function handleDragEnd(event: DragEndEvent) {
+  // Durante o modo de edição, o drag-and-drop só reordena a lista em
+  // memória — nada é enviado ao backend até "Salvar ordenação".
+  function handleDragEnd(event: DragEndEvent) {
+    if (!modoOrdenacao) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = itens.findIndex((i) => i.key === active.id);
-    const newIndex = itens.findIndex((i) => i.key === over.id);
+    const oldIndex = itensExibidos.findIndex((i) => i.key === active.id);
+    const newIndex = itensExibidos.findIndex((i) => i.key === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const novo = arrayMove(itens, oldIndex, newIndex);
-    setOrdemOtimista(novo.map((i) => i.key));
-    setMexendo(true);
+    const novo = arrayMove(itensExibidos, oldIndex, newIndex);
+    setOrdemPendente(novo.map((i) => i.key));
+  }
+
+  // Envia a ordem pendente inteira de uma vez ao backend.
+  async function salvarOrdenacao() {
+    if (!ordemPendente) {
+      setModoOrdenacao(false);
+      return;
+    }
+    const novo = ordemPendente
+      .map((k) => itensPorKey.get(k))
+      .filter((it): it is ItemRepertorio => Boolean(it));
+    setSalvandoOrdenacao(true);
     try {
       await api.put(`/playlists/${id}/reordenar`, {
         itens: novo.map((it) =>
@@ -141,12 +156,19 @@ export function PlaylistDetalhe() {
         ),
       });
       await carregar();
+      setModoOrdenacao(false);
+      setOrdemPendente(null);
     } catch {
-      // erro já em toast pelo interceptor
+      // erro já em toast pelo interceptor — mantém o modo de edição aberto
+      // para o usuário tentar salvar de novo sem perder o arrasto.
     } finally {
-      setOrdemOtimista(null);
-      setMexendo(false);
+      setSalvandoOrdenacao(false);
     }
+  }
+
+  function cancelarOrdenacao() {
+    setOrdemPendente(null);
+    setModoOrdenacao(false);
   }
 
   function alternar(key: string) {
@@ -242,7 +264,35 @@ export function PlaylistDetalhe() {
       <CompartilharEquipe url={urlPublica} senha={playlist.senha} />
 
       {/* Repertório ordenável */}
-      <div className="mb-3 flex justify-end">
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+        {modoOrdenacao && (
+          <button
+            type="button"
+            onClick={cancelarOrdenacao}
+            disabled={salvandoOrdenacao}
+            className="rounded-md px-3 py-2 text-sm font-medium text-neutral-500 hover:bg-neutral-100 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={modoOrdenacao ? salvarOrdenacao : () => setModoOrdenacao(true)}
+          disabled={salvandoOrdenacao || itens.length === 0}
+          className="flex items-center gap-2 rounded-md bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
+        >
+          {salvandoOrdenacao && (
+            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          {salvandoOrdenacao
+            ? 'Salvando ordenação…'
+            : modoOrdenacao
+              ? 'Salvar ordenação'
+              : 'Editar ordenação'}
+        </button>
         <button
           type="button"
           onClick={() => setMostrarAcordes((v) => !v)}
@@ -279,6 +329,8 @@ export function PlaylistDetalhe() {
                     idx={idx}
                     mostrarAcordes={mostrarAcordes}
                     mexendo={mexendo}
+                    modoOrdenacao={modoOrdenacao}
+                    arrastavel={modoOrdenacao && !salvandoOrdenacao}
                     aberta={!fechadas.has(item.key)}
                     onAlternar={() => alternar(item.key)}
                     onRemover={remover}
@@ -377,6 +429,8 @@ function ItemRepertorioRow({
   idx,
   mostrarAcordes,
   mexendo,
+  modoOrdenacao,
+  arrastavel,
   aberta,
   onAlternar,
   onRemover,
@@ -386,6 +440,8 @@ function ItemRepertorioRow({
   idx: number;
   mostrarAcordes: boolean;
   mexendo: boolean;
+  modoOrdenacao: boolean;
+  arrastavel: boolean;
   aberta: boolean;
   onAlternar: () => void;
   onRemover: (songId: number, titulo: string) => void;
@@ -397,7 +453,7 @@ function ItemRepertorioRow({
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.key,
-    disabled: mexendo,
+    disabled: !arrastavel,
     transition: prefersReducedMotion ? null : { duration: 250, easing: 'cubic-bezier(0.4,0,0.2,1)' },
   });
 
@@ -416,7 +472,7 @@ function ItemRepertorioRow({
         type="button"
         {...attributes}
         {...listeners}
-        disabled={mexendo}
+        disabled={!arrastavel}
         aria-label="Arrastar para reordenar"
         className="touch-none cursor-grab pt-1 text-neutral-300 hover:text-teal-600 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30"
       >
@@ -448,7 +504,7 @@ function ItemRepertorioRow({
           )}
           <button
             onClick={() => onRemover(item.musica.song.id, item.musica.song.titulo)}
-            disabled={mexendo}
+            disabled={mexendo || modoOrdenacao}
             className="ml-auto rounded-md px-3 py-1 text-sm text-danger-600 hover:bg-danger-50 disabled:opacity-50"
           >
             Remover
@@ -469,7 +525,7 @@ function ItemRepertorioRow({
             </button>
             <button
               onClick={() => onRemoverLiturgico(item.tipo)}
-              disabled={mexendo}
+              disabled={mexendo || modoOrdenacao}
               className="ml-auto rounded-md px-3 py-1 text-sm text-danger-600 hover:bg-danger-50 disabled:opacity-50"
             >
               Remover
